@@ -69,3 +69,26 @@ def test_pigeonhole_bootstrap_is_wider_than_naive_with_person_effects():
     naive = y.std() / np.sqrt(M)
     assert boot.std() > 2 * naive
     assert 0.6 * true_se < boot.std() < 1.6 * true_se
+
+
+def test_group_mix_summaries_use_the_right_weights():
+    """Race summary at a given mix weights comparisons by n1 * n2; held-fixed versions average two comparisons."""
+    from cropbias.analysis import AUDIT_GROUP_SIZES, COMP_NAMES, RACE_TERMS, Boot, gap_by_mix
+    gaps = {"BF-BM": 0.10, "WF-BF": 0.02, "BF-WM": 0.12, "WF-BM": 0.14, "WM-BM": -0.04, "WF-WM": 0.11}
+    comp = np.repeat(COMP_NAMES, 5)
+    Y = np.array([gaps[c] for c in comp])[:, None]
+    bt = Boot.__new__(Boot)                     # no data needed: set the fields comp_stats reads
+    bt.n = {"BF": 400, "BM": 600, "WF": 100, "WM": 500}
+    bt.W = np.ones((3, len(comp)))
+    bt.masks = {c: comp == c for c in COMP_NAMES}
+    g = gap_by_mix(bt, Y, ["argmax"]).set_index(["mix", "comparison"]).est
+
+    def pooled(n):
+        w = {c: n[c[:2]] * n[c[3:]] for c in RACE_TERMS}
+        return sum(w[c] * s * gaps[c] for c, s in RACE_TERMS.items()) / sum(w.values())
+
+    assert np.isclose(g[("our group mix", "race (White - Black)")], pooled(bt.n))
+    assert np.isclose(g[("audit's group mix", "race (White - Black)")], pooled(AUDIT_GROUP_SIZES))
+    assert np.isclose(g[("within gender", "race (White - Black)")], (0.02 - 0.04) / 2)
+    assert np.isclose(g[("within race", "gender (women - men)")], (0.10 + 0.11) / 2)
+    assert bt.n == {"BF": 400, "BM": 600, "WF": 100, "WM": 500}   # the audit mix must not overwrite the sample's sizes

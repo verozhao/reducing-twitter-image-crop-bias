@@ -11,10 +11,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK_SHARED = ROOT / "work"     # photos and raw query answers, shared by every run
-IMAGES = WORK_SHARED / "images"
+# CROPBIAS_IMAGES points a run at another photo folder (for example the FairFace run).
+IMAGES = Path(os.environ["CROPBIAS_IMAGES"]).resolve() if os.environ.get("CROPBIAS_IMAGES") else WORK_SHARED / "images"
 # CROPBIAS_RUN_DIR puts one run (for example a small pilot) in its own folder.
 _RUN = Path(os.environ["CROPBIAS_RUN_DIR"]).resolve() if os.environ.get("CROPBIAS_RUN_DIR") else None
-DATA = (_RUN / "data") if _RUN else ROOT / "data"          # small committed tables (people, faces, pairs)
+DATA = (_RUN / "data") if _RUN else ROOT / "data"          # per-person tables (people, faces, pairs), kept local
 RESULTS = (_RUN / "results") if _RUN else ROOT / "results"  # committed tables and figures
 WORK = (_RUN / "work") if _RUN else WORK_SHARED             # composites, saliency maps, evaluation
 CACHE = ROOT / ".cache"         # model weights and library caches
@@ -107,7 +108,8 @@ VARIANTS = ["orig"] + sorted(set(PERTURB_MAIN) | set(PERTURB_GEOM))
 # ----------------------------------------------------------------------------
 SPLIT_SEED = 0
 VAL_FRACTION = 0.30
-PAIRS_PER_COMPARISON = {"val": 1000, "test": 4000}
+PAIRS_PER_COMPARISON = {"val": int(os.environ.get("CROPBIAS_PAIRS_VAL", 1000)),
+                        "test": int(os.environ.get("CROPBIAS_PAIRS_TEST", 4000))}
 PAIR_SEED = {"val": 101, "test": 202}
 DEEPGAZE_PER_COMPARISON = int(os.environ.get("CROPBIAS_DG_PER_COMP", 500))  # test composites per comparison scored by DeepGaze IIE
 BOOTSTRAP_ITERS = 2000

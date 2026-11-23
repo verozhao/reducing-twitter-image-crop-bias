@@ -25,6 +25,12 @@ from .stats import binomial_halfwidth, composite_weights, holm, person_weights, 
 COMP_NAMES = [f"{a}-{b}" for a, b in C.COMPARISONS]
 RACE_TERMS = {"WF-BF": 1, "BF-WM": -1, "WF-BM": 1, "WM-BM": 1}     # + means White kept more
 GENDER_TERMS = {"BF-BM": 1, "WF-WM": 1, "BF-WM": 1, "WF-BM": 1}    # + means women kept more
+# Group sizes of Twitter's audit sample (Yee et al. 2021, Section 3.1). The race summary
+# weights the four cross-race comparisons by group sizes, so it depends on the share of
+# women in each race. These sizes let us recompute it at the audit's mix.
+AUDIT_GROUP_SIZES = {"BF": 621, "BM": 1348, "WF": 213, "WM": 606}
+WITHIN_GENDER = {"WF-BF": 0.5, "WM-BM": 0.5}   # race with gender held fixed (+ means White kept more)
+WITHIN_RACE = {"BF-BM": 0.5, "WF-WM": 0.5}     # gender with race held fixed (+ means women kept more)
 BUDGETS = [0.10, 0.20]
 FAMILY_PREFIX = {"sampling": "sampling_", "averaging": "averaging_", "tie": "tie_rate",
                  "stability_main": "stability_main_", "stability_geom": "stability_geom_"}
@@ -107,6 +113,27 @@ def gap_table(sp: Split, bt: Boot, Y: np.ndarray, names: list[str]) -> pd.DataFr
             pt, b = bt.overall(cs, terms)
             s = summarize(pt[j], b[:, j])
             rows.append({"config": name, "comparison": label, **s, "p_holm": s["p"]})
+    return pd.DataFrame(rows)
+
+
+def gap_by_mix(bt: Boot, Y: np.ndarray, names: list[str]) -> pd.DataFrame:
+    """Race and gender summaries under three group mixes: our sample's, the audit's, and
+    one that holds the other attribute fixed (race within gender, gender within race)."""
+    cs = bt.comp_stats(Y)
+    rows = []
+    for mix, n in (("our group mix", bt.n), ("audit's group mix", AUDIT_GROUP_SIZES)):
+        b2 = copy.copy(bt)
+        b2.n = n
+        for label, terms in (("race (White - Black)", RACE_TERMS), ("gender (women - men)", GENDER_TERMS)):
+            pt, b = b2.overall(cs, terms)
+            rows += [{"config": nm, "mix": mix, "comparison": label, **summarize(pt[j], b[:, j])}
+                     for j, nm in enumerate(names)]
+    for mix, label, terms in (("within gender", "race (White - Black)", WITHIN_GENDER),
+                              ("within race", "gender (women - men)", WITHIN_RACE)):
+        pt = sum(w * cs[c][0] for c, w in terms.items())
+        b = sum(w * cs[c][1] for c, w in terms.items())
+        rows += [{"config": nm, "mix": mix, "comparison": label, **summarize(pt[j], b[:, j])}
+                 for j, nm in enumerate(names)]
     return pd.DataFrame(rows)
 
 
@@ -282,6 +309,7 @@ def run_analysis() -> None:
         main = main.merge(dt[["config", "comparison", "diff", "lo", "hi", "p_diff_holm"]]
                           .rename(columns={"lo": "diff_lo", "hi": "diff_hi"}), on=["config", "comparison"])
         main.to_csv(out / "main_table.csv", index=False)
+        gap_by_mix(bt, Y[:, [test.ci[c] for c in main_cfgs]], main_cfgs).to_csv(out / "gaps_by_group_mix.csv", index=False)
 
         # top-k suggestions: coverage gap and first-suggestion gap
         tk = [c for c in test.cfgs if c.startswith("topk_")]
@@ -368,7 +396,13 @@ def replication(test: Split, bt: Boot, Y: np.ndarray) -> pd.DataFrame:
         diff_rows.append({"config": "color only minus all photos", "comparison": label,
                           **summarize(pc[0] - pa[0], bcol[:, 0] - ba[:, 0])})
     t4 = pd.DataFrame(diff_rows)
-    rep = pd.concat([t1, t2, t3, t4])
+    # Race and gender summaries at the audit's group mix and with the other attribute held fixed
+    mixes = []
+    for cfg, b in (("face kept in square crop (our measure)", bt), ("face kept, both photos in color", bc)):
+        g = gap_by_mix(b, kept, [cfg])
+        g = g[g.mix != "our group mix"]
+        mixes.append(g.assign(comparison=g.comparison + ", " + g.mix).drop(columns="mix"))
+    rep = pd.concat([t1, t2, t3, t4] + mixes)
     naive = []
     for _, r in rep.iterrows():
         if r.comparison in COMP_NAMES:
@@ -387,6 +421,15 @@ def replication(test: Split, bt: Boot, Y: np.ndarray) -> pd.DataFrame:
         extra = {r.comparison: r.gap for r in sub.itertuples() if r.comparison.startswith(("race", "gender"))
                  and (r.n == sub[sub.comparison == r.comparison].n.max())}
         rep[col] = rep[col].fillna(rep.comparison.map(extra))
+    # The audit's own summaries are at its group mix. The fixed-attribute versions average
+    # the audit's two matching comparisons, as ours do.
+    for col in ("twitter_no_scaling", "twitter_fixed_height"):
+        v = rep.drop_duplicates("comparison").set_index("comparison")[col]
+        derived = {"race (White - Black), audit's group mix": v["race (White - Black)"],
+                   "gender (women - men), audit's group mix": v["gender (women - men)"],
+                   "race (White - Black), within gender": (v["WF-BF"] + v["WM-BM"]) / 2,
+                   "gender (women - men), within race": (v["BF-BM"] + v["WF-WM"]) / 2}
+        rep[col] = rep[col].fillna(rep.comparison.map(derived))
     for col in ("twitter_no_scaling", "twitter_fixed_height"):
         rep[f"{col}_inside_our_ci"] = np.where(rep[col].isna(), np.nan, (rep[col] >= rep.lo) & (rep[col] <= rep.hi))
     return rep

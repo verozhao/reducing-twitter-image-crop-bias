@@ -12,3 +12,5 @@ torchvision==0.17.2
 facenet-pytorch==2.6.0
 boltons
 deepgaze_pytorch @ git+https://github.com/matthias-k/DeepGaze.git@874f12e1ee519860f49860638cf7f6375956d45a
+# Only for scripts/run_fairface.sh (downloads FairFace from Google Drive)
+gdown==6.5.2
