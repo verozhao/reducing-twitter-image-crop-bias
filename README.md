@@ -43,7 +43,7 @@ Twitter audit values come from the raw counts it released for its main setting (
 
 ![Replication](results/figures/fig1_replication.png)
 
-**2. Near-ties do not carry the gap.** The 10% of pairs with the closest face scores hold -0.3% of the gap (95% interval -4.4% to 3.2%), against 10% if the gap were spread evenly. The gap grows with the score margin and matches a plain shift in face scores. Women's faces score about 0.3 standard deviations higher. Argmax lands on a face in 95% to 97% of crops.
+**2. Near-ties do not carry the gap.** The 10% of pairs with the closest face scores hold -0.3% of the gap (95% interval -4.4% to 3.2%), against 10% if the gap were spread evenly. The gap grows with the score margin and matches a plain shift in face scores. Women's faces score about 0.3 standard deviations higher. Argmax lands on a face in 94% to 98% of crops.
 
 ![Near-tie test](results/figures/fig2_near_tie.png)
 
@@ -58,7 +58,7 @@ Twitter audit values come from the raw counts it released for its main setting (
 | Averaging, top 2 points | 7.7% | -2.3% (-8.1 to 1.7) | 4.2% | 0% |
 
 - Every rule removes significantly less gap per changed crop than its random control (p ≤ 0.007 at every setting, `results/square/efficiency.csv`). This is what a plain score shift predicts: crops change where the scores are close, and those pairs hold almost none of the gap.
-- Large reductions need many random crops. Sampling at T = 1, the temperature in Twitter's own sampling code, removes 38% of the gap but changes 33% of one-person crops, and a rerun on the same photo gives a different person 42% of the time.
+- Large reductions need many random crops. Sampling at T = 1, the temperature in Twitter's own sampling code, removes 38% of the gap but changes 33% of one-person crops, and a rerun on the same photo changes who is kept 42% of the time.
 - Tie-aware is cheap in quality and changes its choice less often than sampling at the same budget (9% vs 14% of reruns). Averaging centers between the two faces and loses faces.
 
 ![Rules](results/figures/fig3_tradeoff.png)

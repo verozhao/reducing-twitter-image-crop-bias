@@ -11,3 +11,13 @@ __pycache__/
 .DS_Store
 # Per-person tables (Wikidata IDs with race and gender labels) stay on this computer
 data/
+# Final report and its drafts are never pushed
+report/
+*.aux
+*.bbl
+*.blg
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
