@@ -1,0 +1,13 @@
+# Local work files: photos, side-by-side images, saliency maps, model files, caches
+work/
+third_party/
+.venv/
+.cache/
+dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+# Per-person tables (Wikidata IDs with race and gender labels) stay on this computer
+data/
