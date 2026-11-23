@@ -39,7 +39,7 @@ Twitter audit values come from the raw counts it released for its main setting (
 - Women are kept more often in all four pairings with men. Within each gender, the race gap is not significant.
 - The overall White vs Black number mostly reflects who is in each group. Our White group is 83% men and our Black group 42% women, so the gender gap spills into it.
 - Black-and-white photos (which the audit's recipe keeps) change the race results. With both photos in color, the race gaps point the same way as the audit's and come out close in size: White women vs Black women 6.5 (audit 6.6) and White men vs Black men 2.8 (audit 2.3). Neither is significant, and the overall White vs Black gap becomes 0.1. The gender gap stays at 11.3 (`results/replication.csv`).
-- Pairs are not independent, because each person appears in many of them. Treating pairs as independent would give intervals of about ±1.5 points, three to four times too narrow. The audit's ±1.0% intervals made that assumption.
+- Pairs are not independent, because each person appears in many of them. Treating pairs as independent would give intervals of about ±1.5 points, two to four times too narrow. The audit's ±1.0% intervals made that assumption.
 
 ![Replication](results/figures/fig1_replication.png)
 
@@ -57,7 +57,7 @@ Twitter audit values come from the raw counts it released for its main setting (
 | Sampling, T = 0.3 | 10.2% | 1.5% (-5.2 to 5.6) | 0.5% | 0% |
 | Averaging, top 2 points | 7.7% | -2.3% (-8.1 to 1.7) | 4.2% | 0% |
 
-- Every rule removes significantly less gap per changed crop than its random control (p ≤ 0.007 at every setting, `results/square/efficiency.csv`). This is what a plain score shift predicts: crops change where the scores are close, and those pairs hold almost none of the gap.
+- At every setting that changes at least 2% of one-person crops, every rule removes significantly less gap per changed crop than its random control (p ≤ 0.007, `results/square/efficiency.csv`). This is what a plain score shift predicts: crops change where the scores are close, and those pairs hold almost none of the gap.
 - Large reductions need many random crops. Sampling at T = 1, the temperature in Twitter's own sampling code, removes 38% of the gap but changes 33% of one-person crops, and a rerun on the same photo changes who is kept 42% of the time.
 - Tie-aware is cheap in quality and changes its choice less often than sampling at the same budget (9% vs 14% of reruns). Averaging centers between the two faces and loses faces.
 
@@ -68,7 +68,7 @@ Twitter audit values come from the raw counts it released for its main setting (
 ![Suggestions](results/figures/fig4_topk.png)
 
 **5. Checks.**
-- Stability fallback shows the full photo equally often for every group, about 14% to 16% with any change. Brightness changes do not make it fall back more often for Black people (Black men minus White men: 1.1 points, -0.1 to 2.4).
+- Stability fallback shows the full photo equally often for every group, about 14% to 16% with any change. With or without brightness changes, Black and White people of the same gender fall back at rates within about one point of each other (`results/square/fallback_by_group.csv`).
 - The face detector misses men's faces more often than women's (9% to 11% vs 3% to 4% of photos), with no race difference within gender (`results/face_detection_by_group.csv`).
 - 3:4 crops give the same results (`results/portrait/`). Our crops match the crops printed by Twitter's program in 100% of composites.
 
