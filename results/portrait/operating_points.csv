@@ -1,0 +1,11 @@
+family,budget,config,val_change
+sampling,0.1,sampling_T0.3,0.11466319719129989
+sampling,0.2,sampling_T0.5,0.19075763496458362
+averaging,0.1,averaging_n2,0.10166666666666667
+averaging,0.2,averaging_n5,0.18933333333333333
+tie,0.1,tie_rate20,0.09958333336810271
+tie,0.2,tie_rate40,0.2010833335717519
+stability_main,0.1,stability_main_m1,0.04566666666666667
+stability_main,0.2,stability_main_m0,0.16316666666666665
+stability_geom,0.1,stability_geom_m1,0.11633333333333333
+stability_geom,0.2,stability_geom_m0,0.187
