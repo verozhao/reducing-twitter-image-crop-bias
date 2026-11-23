@@ -23,25 +23,33 @@ Test split: 1,550 people (417 Black women, 571 Black men, 94 White women, 468 Wh
 
 **1. Twitter's gender gaps replicate, its race gaps do not.** Gap = how much more often the first-named group is kept, in points.
 
-| Comparison | Argmax gap | 95% interval | Holm p | Twitter audit |
-|---|---|---|---|---|
-| Black women vs Black men | 9.2 | 4.9 to 13.3 | 0.006 | 7.0 |
-| White women vs Black women | 1.7 | -4.3 to 7.3 | 0.55 | 6.6 |
-| Black women vs White men | 11.1 | 6.9 to 15.3 | 0.006 | 5.5 |
-| White women vs Black men | 10.3 | 4.1 to 16.1 | 0.009 | 13.5 |
-| White men vs Black men | -3.5 | -6.6 to -0.5 | 0.056 | 2.3 |
-| White women vs White men | 12.0 | 5.4 to 18.2 | 0.006 | 11.7 |
-| All women vs all men | 10.2 | 6.9 to 13.3 | 0.001 | 8.4 |
-| All White vs all Black | -4.5 | -7.3 to -1.8 | 0.003 | 2.5 |
+| Comparison | Ours: top-point gap | 95% CI | Holm p | Twitter fixed-height | Difference |
+|---|---:|---:|---:|---:|---:|
+| Black women vs Black men | 9.4 | 5.0 to 13.5 | 0.006 | 9.3 | +0.0 |
+| White women vs Black women | 1.7 | −4.4 to 7.4 | 0.570 | 2.6 | −0.9 |
+| Black women vs White men | 11.1 | 6.8 to 15.3 | 0.006 | 5.8 | +5.2 |
+| White women vs Black men | 10.5 | 4.1 to 16.4 | 0.009 | 12.7 | −2.2 |
+| White men vs Black men | −3.1 | −6.3 to 0.0 | 0.104 | 1.9 | −5.0 |
+| White women vs White men | 11.8 | 5.1 to 18.1 | 0.008 | 11.4 | +0.5 |
 
 Twitter audit values come from the raw counts it released for its main setting (no scaling, 10,000 pairs per comparison).
 
 - Women are kept more often in all four pairings with men. Within each gender, the race gap is not significant.
 - The overall White vs Black number mostly reflects who is in each group. Our White group is 83% men and our Black group 42% women, so the gender gap spills into it.
-- Black-and-white photos (which the audit's recipe keeps) change the race results. With both photos in color, the race gaps point the same way as the audit's and come out close in size: White women vs Black women 6.5 (audit 6.6) and White men vs Black men 2.8 (audit 2.3). Neither is significant, and the overall White vs Black gap becomes 0.1. The gender gap stays at 11.3 (`results/replication.csv`).
+- Using Twitter’s fixed-height preprocessing and top-point metric, we replicate the gender disparities: women are favored over men in all four gender-crossing comparisons. The within-gender race results do not reliably replicate. White women versus Black women has a small, nonsignificant positive gap, while White men versus Black men reverses direction and is also nonsignificant.
 - Pairs are not independent, because each person appears in many of them. Treating pairs as independent would give intervals of about ±1.5 points, three to four times too narrow. The audit's ±1.0% intervals made that assumption.
 
 ![Replication](results/figures/fig1_replication.png)
+
+**1.1 Color-only sensitivity analysis**
+| Comparison | All photos | Both photos in color | Color-only 95% CI | Color-only Holm p | Change |
+|---|---:|---:|---:|---:|---:|
+| White women vs Black women | 1.7 | 6.5 | −0.5 to 13.5 | 0.144 | +4.8 |
+| White men vs Black men | −3.5 | 2.8 | −1.5 to 7.3 | 0.199 | +6.3 |
+| All White vs all Black | −4.5 | 0.1 | −3.8 to 3.9 | 0.959 | +4.6 |
+| All women vs all men | 10.2 | 11.3 | 7.1 to 15.3 | 0.001 | +1.0 |
+
+- Restricting the reconstructed dataset to color-only pairs substantially changes the race estimates: both within-gender race gaps move in the White-favored direction, and the aggregate race gap moves from −4.5 points to approximately zero. However, neither color-only within-gender race gap is statistically significant. The gender gap changes little, increasing from 10.2 to 11.3 points. This suggests that grayscale status or correlated image properties affect the race results, but it is not a replication of Twitter’s original audit.
 
 **2. Near-ties do not carry the gap.** The 10% of pairs with the closest face scores hold -0.3% of the gap (95% interval -4.4% to 3.2%), against 10% if the gap were spread evenly. The gap grows with the score margin and matches a plain shift in face scores. Women's faces score about 0.3 standard deviations higher. Argmax lands on a face in 95% to 97% of crops.
 
