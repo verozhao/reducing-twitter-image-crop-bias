@@ -1,3 +1,4 @@
+
 """Uncertainty from resampling people, not seeds.
 
 Every composite pairs one person from each group, and each person appears in many
@@ -32,12 +33,14 @@ def composite_weights(pairs: pd.DataFrame, people_by_group: dict[str, np.ndarray
     i1 = np.array([idx[g][q] for g, q in zip(pairs.g1, pairs.q1)])
     i2 = np.array([idx[g][q] for g, q in zip(pairs.g2, pairs.q2)])
     iters = next(iter(counts.values())).shape[0]
-    w = np.empty((iters, len(pairs)), np.float32)
+
+    w = np.ones((iters, len(pairs)), dtype=np.float32)
+
     for g in C.GROUPS:
         m1 = (pairs.g1 == g).to_numpy()
         m2 = (pairs.g2 == g).to_numpy()
         if m1.any():
-            w[:, m1] = counts[g][:, i1[m1]]
+            w[:, m1] *= counts[g][:, i1[m1]]
         if m2.any():
             w[:, m2] *= counts[g][:, i2[m2]]
     return w

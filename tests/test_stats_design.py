@@ -54,3 +54,38 @@ def test_pigeonhole_bootstrap_is_wider_than_naive_with_person_effects():
     naive = y.std() / np.sqrt(M)
     assert boot.std() > 2 * naive
     assert 0.6 * true_se < boot.std() < 1.6 * true_se
+
+
+def test_bootstrap_weights_wf_bf():
+    # One person from each demographic group
+    people = {
+        g: np.array([f"Q{g}"])
+        for g in C.GROUPS
+    }
+
+    # Set bootstrap counts:
+    # WF appears twice, BF appears three times
+    counts = {
+        g: np.ones((1, 1), dtype=np.float32)
+        for g in C.GROUPS
+    }
+    counts["WF"][0, 0] = 2
+    counts["BF"][0, 0] = 3
+
+    # One composite: White Female vs Black Female
+    pairs = pd.DataFrame([{
+        "g1": "WF",
+        "q1": "QWF",
+        "g2": "BF",
+        "q2": "QBF",
+    }])
+
+    # Calculate composite bootstrap weight
+    weights = composite_weights(pairs, people, counts)
+
+    # Expected: 2 * 3 = 6
+    np.testing.assert_array_equal(
+        weights,
+        np.array([[6.0]], dtype=np.float32)
+    )
+
