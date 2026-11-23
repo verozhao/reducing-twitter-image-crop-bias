@@ -1,8 +1,9 @@
 """Repeat the test-pair draw with new seeds and check how much the main results move.
 
 The main design draws its test pairs once (seed 202). Here the same test people are paired
-again with other seeds. People, their validation split and every rule setting stay fixed.
-Only unchanged composites are scored, so every rule except stability fallback is covered.
+again with nine other seeds, so there are ten draws in all. People, their validation split
+and every rule setting stay fixed. Only unchanged composites are scored, so every rule
+except stability fallback is covered.
 """
 from __future__ import annotations
 
@@ -27,7 +28,7 @@ from .rules import View
 from .stats import summarize
 from .twitter_saliency import load_store, run_binary, save_store
 
-SEEDS = (203, 204, 205, 206)
+SEEDS = tuple(range(203, 212))     # nine new draws, plus the main draw (202)
 OUT = C.RESULTS / "seeds"
 
 

@@ -12,7 +12,7 @@ Stages, in order:
   evaluate    apply every rule, write work/eval/
   analyze     statistics, tables and figures in results/
   all         everything above
-  seeds       (extra) redraw the test pairs with four more seeds, results/seeds/
+  seeds       (extra) redraw the test pairs with nine more seeds, results/seeds/
   fairface    (extra) prepare FairFace as a second dataset (see README)
   sources     (extra) which photo properties carry the gender gap, results/square/gap_sources.csv
 --limit N keeps only the first N pairs per comparison (for a quick pilot).
@@ -185,7 +185,7 @@ def stage_fairface(args):
 
 
 def stage_seeds(args):
-    """Redraw the test pairs with four more seeds and summarize how much the results move."""
+    """Redraw the test pairs with nine more seeds and summarize how much the results move."""
     from .seeds import run
     out = run(limit=args.limit, workers=args.workers)
     print(out.pivot(index="metric", columns="design", values="est").round(3).to_string())
