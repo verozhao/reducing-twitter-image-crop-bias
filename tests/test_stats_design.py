@@ -26,6 +26,21 @@ def test_split_and_pairs_are_balanced():
         assert set(sp.q1).isdisjoint(set(split.qid[split.split == "val"]))
 
 
+def test_composite_weights_use_both_people_in_every_comparison():
+    """Each composite's weight must be the product of both people's counts, whatever
+    order the comparison's groups come in (this once failed for WF-BF, WF-BM, WM-BM)."""
+    split = split_people(fake_people())
+    pairs = make_pairs(split, "test", 60, seed=5)
+    ds = split[split.split == "test"]
+    people = {g: np.array(sorted(ds.qid[ds.group == g])) for g in C.GROUPS}
+    counts = person_weights(people, 50, 3)
+    w = composite_weights(pairs, people, counts)
+    idx = {g: {q: i for i, q in enumerate(people[g])} for g in C.GROUPS}
+    for k, r in enumerate(pairs.itertuples()):
+        expect = counts[r.g1][:, idx[r.g1][r.q1]] * counts[r.g2][:, idx[r.g2][r.q2]]
+        assert np.array_equal(w[:, k], expect), (r.g1, r.g2)
+
+
 def test_holm():
     adj = holm(np.array([0.01, 0.04, 0.03, 0.2]))
     assert np.allclose(adj, [0.04, 0.09, 0.09, 0.2])
