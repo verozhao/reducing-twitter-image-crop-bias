@@ -113,3 +113,15 @@ Wikimedia asks automated downloads to name a contact and keep at most 2 requests
 - Race and gender come from Wikidata labels mapped with Twitter's census-based map. Such labels are coarse and can be wrong ([Scheuerman et al., 2020](https://doi.org/10.1145/3392866)).
 - DeepGaze IIE is itself a gaze model, so its quality scores are a second opinion.
 - Twitter's program and model are downloaded from [twitter-research/image-crop-analysis](https://github.com/twitter-research/image-crop-analysis) (Apache-2.0) and are not part of this repo.
+
+## More checks
+
+Ten pair draws, other group mixes, simple photo properties and a second dataset, all on the same fixed model.
+
+Updated 2026-11-24
+
+- **Ten pair draws** (`python -m cropbias seeds`, `results/seeds/`). The test pairs are redrawn with seeds 203 to 211 from the same people and rule settings, which covers every rule except stability fallback. Across the ten draws the gender gap runs from 10.1 to 10.8, and the closest 10% of pairs hold -1.0% to 2.6% of the pooled gap, below 10% in every draw (p ≤ 0.006). In all ten draws tie-aware cropping, sampling and averaging remove less gap per changed crop than a random switch (five settings, p ≤ 0.009).
+- **Group mix** (`results/square/gaps_by_group_mix.csv`). The White vs Black summary weights comparisons by group sizes, so it depends on the share of women in each race. It is -4.5 at our sizes, -2.4 (-5.8 to 0.8) at the audit's sizes and -0.9 (-4.8 to 2.8) with gender held fixed. In color photos with gender held fixed it is 4.6 (-0.6 to 9.8). The gender gap stays between 10.0 and 10.6 under all three.
+- **Photo properties** (`python -m cropbias sources`, `results/square/gap_sources.csv`, exploratory). Color and contrast account for about a third of the gender gap. At equal face width, brightness, contrast and color the gap is 7.1 (4.0 to 10.2).
+- **FairFace** (`./scripts/run_fairface.sh`, `results/fairface/`). Validation photos of people labeled Black or White and aged 20 or older: 2,294 people, 2,000 test pairs per comparison, no DeepGaze. The gender gap is 4.8 (1.3 to 8.1). With gender held fixed the race gap is 4.2 toward White people (0.5 to 8.0), close to the color-only WikiCeleb value. Two suggestions in random order again remove the first-suggestion gap.
+- Sampled suggestions use 256 seeded draws per photo, the one rule not scored exactly.

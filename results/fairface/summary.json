@@ -1,0 +1,195 @@
+{
+ "n_test_people": {
+  "BF": 293,
+  "BM": 327,
+  "WF": 431,
+  "WM": 554
+ },
+ "n_test_composites": 12000,
+ "bootstrap_iters": 2000,
+ "crop_matches_program_square": 1.0,
+ "crop_matches_program_portrait": 1.0,
+ "top_column_is_program_point": 1.0,
+ "near_tie_share": [
+  {
+   "closest_share_of_photos": 0.05,
+   "share_of_gap": 0.005312084993359893,
+   "lo": -0.14590221919812937,
+   "hi": 0.14934173999944447,
+   "p_share_eq_photos": 0.43478260869565216,
+   "bell_shift_prediction": 0.002092024763734994
+  },
+  {
+   "closest_share_of_photos": 0.1,
+   "share_of_gap": 0.02390438247011952,
+   "lo": -0.19299660441426145,
+   "hi": 0.22413739816291445,
+   "p_share_eq_photos": 0.3638180909545227,
+   "bell_shift_prediction": 0.007115316783633556
+  },
+  {
+   "closest_share_of_photos": 0.2,
+   "share_of_gap": 0.035856573705179286,
+   "lo": -0.29646883934630486,
+   "hi": 0.26248414689623784,
+   "p_share_eq_photos": 0.14492753623188406,
+   "bell_shift_prediction": 0.03609959010910153
+  },
+  {
+   "closest_share_of_photos": 0.3,
+   "share_of_gap": 0.06905710491367861,
+   "lo": -0.3216443580348463,
+   "hi": 0.333667883211677,
+   "p_share_eq_photos": 0.079960019990005,
+   "bell_shift_prediction": 0.07556831312259023
+  },
+  {
+   "closest_share_of_photos": 0.5,
+   "share_of_gap": 0.19123505976095617,
+   "lo": -0.3121892242053298,
+   "hi": 0.4794830298474216,
+   "p_share_eq_photos": 0.038980509745127435,
+   "bell_shift_prediction": 0.21164722624274782
+  }
+ ],
+ "square_orientation": {
+  "BF-BM": 1.0,
+  "WF-BF": -1.0,
+  "BF-WM": -1.0,
+  "WF-BM": 1.0,
+  "WM-BM": 1.0,
+  "WF-WM": 1.0
+ },
+ "square_operating_points": [
+  {
+   "family": "sampling",
+   "budget": 0.1,
+   "config": "sampling_T0.3",
+   "val_change": 0.11353289371669704
+  },
+  {
+   "family": "sampling",
+   "budget": 0.2,
+   "config": "sampling_T0.5",
+   "val_change": 0.18977480539467298
+  },
+  {
+   "family": "averaging",
+   "budget": 0.1,
+   "config": "averaging_n2",
+   "val_change": 0.094
+  },
+  {
+   "family": "averaging",
+   "budget": 0.2,
+   "config": "averaging_n8",
+   "val_change": 0.24533333333333332
+  },
+  {
+   "family": "tie",
+   "budget": 0.1,
+   "config": "tie_rate20",
+   "val_change": 0.09944444446762403
+  },
+  {
+   "family": "tie",
+   "budget": 0.2,
+   "config": "tie_rate40",
+   "val_change": 0.20000000008940697
+  },
+  {
+   "family": "stability_main",
+   "budget": 0.1,
+   "config": "stability_main_m0",
+   "val_change": 0.14733333333333334
+  },
+  {
+   "family": "stability_main",
+   "budget": 0.2,
+   "config": "stability_main_m0",
+   "val_change": 0.14733333333333334
+  },
+  {
+   "family": "stability_geom",
+   "budget": 0.1,
+   "config": "stability_geom_m1",
+   "val_change": 0.10733333333333334
+  },
+  {
+   "family": "stability_geom",
+   "budget": 0.2,
+   "config": "stability_geom_m0",
+   "val_change": 0.16833333333333333
+  }
+ ],
+ "portrait_orientation": {
+  "BF-BM": 1.0,
+  "WF-BF": -1.0,
+  "BF-WM": -1.0,
+  "WF-BM": 1.0,
+  "WM-BM": 1.0,
+  "WF-WM": 1.0
+ },
+ "portrait_operating_points": [
+  {
+   "family": "sampling",
+   "budget": 0.1,
+   "config": "sampling_T0.3",
+   "val_change": 0.11898355541765795
+  },
+  {
+   "family": "sampling",
+   "budget": 0.2,
+   "config": "sampling_T0.5",
+   "val_change": 0.2032018148038478
+  },
+  {
+   "family": "averaging",
+   "budget": 0.1,
+   "config": "averaging_n2",
+   "val_change": 0.096
+  },
+  {
+   "family": "averaging",
+   "budget": 0.2,
+   "config": "averaging_n5",
+   "val_change": 0.20666666666666667
+  },
+  {
+   "family": "tie",
+   "budget": 0.1,
+   "config": "tie_rate20",
+   "val_change": 0.09936111120382944
+  },
+  {
+   "family": "tie",
+   "budget": 0.2,
+   "config": "tie_rate40",
+   "val_change": 0.20047222262620926
+  },
+  {
+   "family": "stability_main",
+   "budget": 0.1,
+   "config": "stability_main_m0",
+   "val_change": 0.15066666666666667
+  },
+  {
+   "family": "stability_main",
+   "budget": 0.2,
+   "config": "stability_main_m0",
+   "val_change": 0.15066666666666667
+  },
+  {
+   "family": "stability_geom",
+   "budget": 0.1,
+   "config": "stability_geom_m1",
+   "val_change": 0.113
+  },
+  {
+   "family": "stability_geom",
+   "budget": 0.2,
+   "config": "stability_geom_m0",
+   "val_change": 0.17133333333333334
+  }
+ ]
+}
