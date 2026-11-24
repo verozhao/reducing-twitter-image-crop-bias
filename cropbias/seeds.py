@@ -204,7 +204,8 @@ def _evaluated(lab: str, n_pairs: int) -> bool:
 
 def run(limit: int | None = None, workers: int = 8) -> pd.DataFrame:
     sign = orientation(Split("val"), "square")
-    rows = summarize_design(Split("test"), "main (seed 202)", sign) if not limit else []
+    main = f"main (seed {C.PAIR_SEED['test']})"          # 202 unless CROPBIAS_PAIR_SEED_TEST is set
+    rows = summarize_design(Split("test"), main, sign) if not limit else []
     for seed in SEEDS:
         lab = label(seed)
         pairs = draw_pairs(seed)
