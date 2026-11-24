@@ -25,6 +25,12 @@ from .stats import binomial_halfwidth, composite_weights, holm, person_weights, 
 COMP_NAMES = [f"{a}-{b}" for a, b in C.COMPARISONS]
 RACE_TERMS = {"WF-BF": 1, "BF-WM": -1, "WF-BM": 1, "WM-BM": 1}     # + means White kept more
 GENDER_TERMS = {"BF-BM": 1, "WF-WM": 1, "BF-WM": 1, "WF-BM": 1}    # + means women kept more
+# Group sizes of Twitter's audit sample (Yee et al. 2021, Section 3.1). The race summary
+# weights the four cross-race comparisons by group sizes, so it depends on the share of
+# women in each race. These sizes let us recompute it at the audit's mix.
+AUDIT_GROUP_SIZES = {"BF": 621, "BM": 1348, "WF": 213, "WM": 606}
+WITHIN_GENDER = {"WF-BF": 0.5, "WM-BM": 0.5}   # race with gender held fixed (+ means White kept more)
+WITHIN_RACE = {"BF-BM": 0.5, "WF-WM": 0.5}     # gender with race held fixed (+ means women kept more)
 BUDGETS = [0.10, 0.20]
 FAMILY_PREFIX = {"sampling": "sampling_", "averaging": "averaging_", "tie": "tie_rate",
                  "stability_main": "stability_main_", "stability_geom": "stability_geom_"}
@@ -107,6 +113,27 @@ def gap_table(sp: Split, bt: Boot, Y: np.ndarray, names: list[str]) -> pd.DataFr
             pt, b = bt.overall(cs, terms)
             s = summarize(pt[j], b[:, j])
             rows.append({"config": name, "comparison": label, **s, "p_holm": s["p"]})
+    return pd.DataFrame(rows)
+
+
+def gap_by_mix(bt: Boot, Y: np.ndarray, names: list[str]) -> pd.DataFrame:
+    """Race and gender summaries under three group mixes: our sample's, the audit's, and
+    one that holds the other attribute fixed (race within gender, gender within race)."""
+    cs = bt.comp_stats(Y)
+    rows = []
+    for mix, n in (("our group mix", bt.n), ("audit's group mix", AUDIT_GROUP_SIZES)):
+        b2 = copy.copy(bt)
+        b2.n = n
+        for label, terms in (("race (White - Black)", RACE_TERMS), ("gender (women - men)", GENDER_TERMS)):
+            pt, b = b2.overall(cs, terms)
+            rows += [{"config": nm, "mix": mix, "comparison": label, **summarize(pt[j], b[:, j])}
+                     for j, nm in enumerate(names)]
+    for mix, label, terms in (("within gender", "race (White - Black)", WITHIN_GENDER),
+                              ("within race", "gender (women - men)", WITHIN_RACE)):
+        pt = sum(w * cs[c][0] for c, w in terms.items())
+        b = sum(w * cs[c][1] for c, w in terms.items())
+        rows += [{"config": nm, "mix": mix, "comparison": label, **summarize(pt[j], b[:, j])}
+                 for j, nm in enumerate(names)]
     return pd.DataFrame(rows)
 
 
@@ -193,8 +220,11 @@ def run_analysis() -> None:
 
         # quality and predictability, pooled over comparisons
         qrows = []
-        for m in ("p_neither", "p_both", "fb", "cut", "tw", "dg", "change", "pred_same", "pred_copy"):
-            V = test.metric(aspect, m)
+        # How often the first suggestion (or the single crop) changes when the rule runs again
+        F = np.stack([test.metric(aspect, k) for k in ("f_neither", "f_only1", "f_only2", "f_both")], axis=-1)
+        pred_first = 1.0 - (F ** 2).sum(axis=-1)
+        for m in ("p_neither", "p_both", "fb", "cut", "tw", "dg", "change", "pred_same", "pred_copy", "pred_first"):
+            V = pred_first if m == "pred_first" else test.metric(aspect, m)
             ok = np.isfinite(V).all(axis=1) if m == "dg" else np.ones(len(V), bool)
             if m == "pred_copy":
                 ok = np.isfinite(V[:, 0])
@@ -234,6 +264,11 @@ def run_analysis() -> None:
         # Matching random controls, both exact: showing the full photo for a random share x
         # of one-person crops removes x of the gap (efficiency 1); switching a random share x
         # to the other face reverses those outcomes and removes 2x (efficiency 2).
+        # Gap among the photos a rule still crops (differs from the gap only for fallback rules)
+        kept_crop = 1.0 - test.metric(aspect, "fb")
+        Gc_pt = sum(sign[c] * Y[bt.masks[c]].sum(axis=0) / kept_crop[bt.masks[c]].sum(axis=0) for c in COMP_NAMES) / 6
+        Gc_b = sum(sign[c] * (bt.W[:, bt.masks[c]] @ Y[bt.masks[c]]) / (bt.W[:, bt.masks[c]] @ kept_crop[bt.masks[c]])
+                   for c in COMP_NAMES) / 6
         eff_rows = []
         for j, name in enumerate(test.cfgs):
             R_pt = (G_pt[arg] - G_pt[j]) / G_pt[arg]
@@ -260,7 +295,9 @@ def run_analysis() -> None:
                              "one_person_crops_changed": u_pt, "efficiency": e["est"],
                              "efficiency_lo": e["lo"], "efficiency_hi": e["hi"],
                              "matching_control": ctrl_name, "control_efficiency": control,
-                             "p_vs_control": p_ctrl})
+                             "p_vs_control": p_ctrl, "pooled_gap_among_cropped": Gc_pt[j],
+                             "among_cropped_lo": np.percentile(Gc_b[:, j], 2.5),
+                             "among_cropped_hi": np.percentile(Gc_b[:, j], 97.5)})
         eff = pd.DataFrame(eff_rows)
         eff.to_csv(out / "efficiency.csv", index=False)
 
@@ -272,6 +309,7 @@ def run_analysis() -> None:
         main = main.merge(dt[["config", "comparison", "diff", "lo", "hi", "p_diff_holm"]]
                           .rename(columns={"lo": "diff_lo", "hi": "diff_hi"}), on=["config", "comparison"])
         main.to_csv(out / "main_table.csv", index=False)
+        gap_by_mix(bt, Y[:, [test.ci[c] for c in main_cfgs]], main_cfgs).to_csv(out / "gaps_by_group_mix.csv", index=False)
 
         # top-k suggestions: coverage gap and first-suggestion gap
         tk = [c for c in test.cfgs if c.startswith("topk_")]
@@ -299,7 +337,16 @@ def run_analysis() -> None:
                     vals.append(((fb[m, j]).mean(), (Wm @ fb[m, j]) / Wm.sum(axis=1)))
                 rows.append({"config": c, "group": f"{race_pair[0]} minus {race_pair[1]}",
                              **summarize(vals[0][0] - vals[1][0], vals[0][1] - vals[1][1])})
+            for comp in COMP_NAMES:
+                m = bt.masks[comp]
+                Wm = bt.W[:, m]
+                rows.append({"config": c, "group": f"comparison {comp}",
+                             **summarize(fb[m, j].mean(), (Wm @ fb[m, j]) / Wm.sum(axis=1))})
         pd.DataFrame(rows).to_csv(out / "fallback_by_group.csv", index=False)
+
+        # The proposal's test: gap at equal crop quality, tie-aware against sampling (descriptive)
+        if aspect == "square":
+            equal_quality(test, quality, eff).to_csv(out / "equal_quality.csv", index=False)
 
         if aspect == "square":
             near = near_tie(test, bt, sign)
@@ -337,7 +384,25 @@ def replication(test: Split, bt: Boot, Y: np.ndarray) -> pd.DataFrame:
     bc.n = {g: int(((ds.group == g) & (ds.split == test.name) & color).sum()) for g in C.GROUPS}
     t3 = gap_table(test, bc, kept, ["face kept, both photos in color"])
     t3["n_composites"] = t3.comparison.map({c: int(m.sum()) for c, m in bc.masks.items()})
-    rep = pd.concat([t1, t2, t3])
+    # Is the color-only gap different from the all-photo gap? Same people draws for both.
+    cs_all, cs_col = bt.comp_stats(kept), bc.comp_stats(kept)
+    diff_rows = []
+    for c in COMP_NAMES:
+        diff_rows.append({"config": "color only minus all photos", "comparison": c,
+                          **summarize(cs_col[c][0][0] - cs_all[c][0][0], cs_col[c][1][:, 0] - cs_all[c][1][:, 0])})
+    for label, terms in (("race (White - Black)", RACE_TERMS), ("gender (women - men)", GENDER_TERMS)):
+        pa, ba = bt.overall(cs_all, terms)
+        pc, bcol = bc.overall(cs_col, terms)
+        diff_rows.append({"config": "color only minus all photos", "comparison": label,
+                          **summarize(pc[0] - pa[0], bcol[:, 0] - ba[:, 0])})
+    t4 = pd.DataFrame(diff_rows)
+    # Race and gender summaries at the audit's group mix and with the other attribute held fixed
+    mixes = []
+    for cfg, b in (("face kept in square crop (our measure)", bt), ("face kept, both photos in color", bc)):
+        g = gap_by_mix(b, kept, [cfg])
+        g = g[g.mix != "our group mix"]
+        mixes.append(g.assign(comparison=g.comparison + ", " + g.mix).drop(columns="mix"))
+    rep = pd.concat([t1, t2, t3, t4] + mixes)
     naive = []
     for _, r in rep.iterrows():
         if r.comparison in COMP_NAMES:
@@ -351,12 +416,45 @@ def replication(test: Split, bt: Boot, Y: np.ndarray) -> pd.DataFrame:
                          ("wiki_fixed_height_intersect", "twitter_fixed_height")):
         sub = tw[(tw.setting == setting) & (tw.n == tw[tw.setting == setting].n.max())]
         rep[col] = rep.comparison.map(dict(zip(sub.comparison, sub.gap)))
-    sub = tw[tw.setting == "wiki_no_scaling"]
-    extra = {r.comparison: r.gap for r in sub.itertuples() if r.comparison.startswith(("race", "gender"))
-             and (r.n == sub[sub.comparison == r.comparison].n.max())}
-    rep["twitter_no_scaling"] = rep.twitter_no_scaling.fillna(rep.comparison.map(extra))
-    rep["twitter_inside_our_ci"] = (rep.twitter_no_scaling >= rep.lo) & (rep.twitter_no_scaling <= rep.hi)
+    for setting, col in (("wiki_no_scaling", "twitter_no_scaling"), ("wiki_fixed_height", "twitter_fixed_height")):
+        sub = tw[tw.setting == setting]
+        extra = {r.comparison: r.gap for r in sub.itertuples() if r.comparison.startswith(("race", "gender"))
+                 and (r.n == sub[sub.comparison == r.comparison].n.max())}
+        rep[col] = rep[col].fillna(rep.comparison.map(extra))
+    # The audit's own summaries are at its group mix. The fixed-attribute versions average
+    # the audit's two matching comparisons, as ours do.
+    for col in ("twitter_no_scaling", "twitter_fixed_height"):
+        v = rep.drop_duplicates("comparison").set_index("comparison")[col]
+        derived = {"race (White - Black), audit's group mix": v["race (White - Black)"],
+                   "gender (women - men), audit's group mix": v["gender (women - men)"],
+                   "race (White - Black), within gender": (v["WF-BF"] + v["WM-BM"]) / 2,
+                   "gender (women - men), within race": (v["BF-BM"] + v["WF-WM"]) / 2}
+        rep[col] = rep[col].fillna(rep.comparison.map(derived))
+    for col in ("twitter_no_scaling", "twitter_fixed_height"):
+        rep[f"{col}_inside_our_ci"] = np.where(rep[col].isna(), np.nan, (rep[col] >= rep.lo) & (rep[col] <= rep.hi))
     return rep
+
+
+def equal_quality(test: Split, quality: pd.DataFrame, eff: pd.DataFrame) -> pd.DataFrame:
+    """Pooled gap of each switching rule at equal crop quality, by linear interpolation
+    along its settings (argmax is the shared starting point). Descriptive, no intervals."""
+    q = quality.set_index(["config", "metric"]).est
+    e = eff.set_index("config").pooled_gap
+    fams = {"tie-aware": "tie_rate", "sampling": "sampling_", "averaging": "averaging_"}
+    rows = []
+    for metric, levels in (("p_neither", (0.005, 0.008, 0.010)), ("dg", (0.625, 0.620, 0.617))):
+        if ("argmax", metric) not in q.index:
+            continue
+        for fam, prefix in fams.items():
+            cl = ["argmax"] + [c for c in test.cfgs if c.startswith(prefix)]
+            xs = np.array([q[(c, metric)] for c in cl])
+            ys = np.array([e[c] for c in cl])
+            order = np.argsort(xs)
+            for lv in levels:
+                inside = xs.min() <= lv <= xs.max()
+                rows.append({"quality_metric": metric, "level": lv, "family": fam,
+                             "pooled_gap": float(np.interp(lv, xs[order], ys[order])) if inside else np.nan})
+    return pd.DataFrame(rows)
 
 
 # ----------------------------------------------------------------------------
@@ -562,7 +660,7 @@ def make_figures(test, bt, gaps, quality, eff, ops, near, rep, sign) -> None:
         return sorted(cl, key=lambda c: e.one_person_crops_changed[c])
 
     fams = [("sampling", "sampling_", SERIES[0]), ("averaging", "averaging_", SERIES[1]),
-            ("tie-aware (ours)", "tie_rate", SERIES[2]), ("stability fallback (ours)", "stability_main_", SERIES[3]),
+            ("tie-aware (ours)", "tie_rate", SERIES[2]), ("stability, with brightness (ours)", "stability_main_", SERIES[3]),
             ("stability, no brightness (ours)", "stability_geom_", SERIES[4])]
     fig, axs = plt.subplots(1, 3, figsize=(13, 4), sharey=True)
     ax = axs[0]
@@ -610,7 +708,7 @@ def make_figures(test, bt, gaps, quality, eff, ops, near, rep, sign) -> None:
         for (mode, measure, color, name) in (("ordered", "coverage (in at least one suggestion)", SERIES[0], "In any suggestion (top k)"),
                                              ("ordered", "first suggestion", SERIES[1], "First suggestion (top k, best first)"),
                                              ("shuffled", "first suggestion", SERIES[2], "First suggestion (shuffled)"),
-                                             ("sampled", "coverage (in at least one suggestion)", SERIES[3], "In any suggestion (sampled, T=0.3)")):
+                                             ("sampled", "first suggestion", SERIES[3], "First suggestion (sampled, T=0.3)")):
             rows = []
             for k in (1, 2, 3, 4):
                 cfg = f"topk_{mode}_k{k}" if mode != "sampled" else f"topk_sampled_k{k}_T0.3"

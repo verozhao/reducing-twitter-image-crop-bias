@@ -1,0 +1,10 @@
+quality_metric,level,family,pooled_gap
+p_neither,0.005,tie-aware,
+p_neither,0.008,tie-aware,0.02585416678826635
+p_neither,0.01,tie-aware,0.02297366529502393
+p_neither,0.005,sampling,
+p_neither,0.008,sampling,0.029600012768318376
+p_neither,0.01,sampling,0.028692697662382003
+p_neither,0.005,averaging,
+p_neither,0.008,averaging,0.031389630528586836
+p_neither,0.01,averaging,0.03140095738942826

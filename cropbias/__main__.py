@@ -12,6 +12,9 @@ Stages, in order:
   evaluate    apply every rule, write work/eval/
   analyze     statistics, tables and figures in results/
   all         everything above
+  seeds       (extra) redraw the test pairs with nine more seeds, results/seeds/
+  fairface    (extra) prepare FairFace as a second dataset (see README)
+  sources     (extra) which photo properties carry the gender gap, results/square/gap_sources.csv
 --limit N keeps only the first N pairs per comparison (for a quick pilot).
 """
 from __future__ import annotations
@@ -173,13 +176,35 @@ def stage_analyze(args):
     run_analysis()
 
 
+def stage_fairface(args):
+    """Prepare FairFace as a second dataset (run with CROPBIAS_RUN_DIR and CROPBIAS_IMAGES set)."""
+    from .fairface import prepare
+    raw = C.WORK_SHARED / "fairface_raw"
+    people = prepare(raw / "images", raw / "fairface_label_val.csv")
+    print(people.group.value_counts().to_string())
+
+
+def stage_seeds(args):
+    """Redraw the test pairs with nine more seeds and summarize how much the results move."""
+    from .seeds import run
+    out = run(limit=args.limit, workers=args.workers)
+    print(out.pivot(index="metric", columns="design", values="est").round(3).to_string())
+
+
+def stage_sources(args):
+    """Fit the gender gap on face width, brightness, contrast and color (exploratory)."""
+    from .mechanism import run
+    print(run().round(4).to_string(index=False))
+
+
 STAGES = ["people", "download", "faces", "dataset", "pairs", "composites", "saliency", "deepgaze",
           "evaluate", "analyze"]
+EXTRA_STAGES = ["seeds", "fairface", "sources"]
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("stage", choices=STAGES + ["all"])
+    ap.add_argument("stage", choices=STAGES + EXTRA_STAGES + ["all"])
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--refresh", action="store_true", help="re-run the Wikidata query")
