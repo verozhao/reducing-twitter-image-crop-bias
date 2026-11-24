@@ -92,3 +92,37 @@ def test_group_mix_summaries_use_the_right_weights():
     assert np.isclose(g[("within gender", "race (White - Black)")], (0.02 - 0.04) / 2)
     assert np.isclose(g[("within race", "gender (women - men)")], (0.10 + 0.11) / 2)
     assert bt.n == {"BF": 400, "BM": 600, "WF": 100, "WM": 500}   # the audit mix must not overwrite the sample's sizes
+
+
+def test_bootstrap_weights_wf_bf():
+    # One person from each demographic group
+    people = {
+        g: np.array([f"Q{g}"])
+        for g in C.GROUPS
+    }
+
+    # Set bootstrap counts:
+    # WF appears twice, BF appears three times
+    counts = {
+        g: np.ones((1, 1), dtype=np.float32)
+        for g in C.GROUPS
+    }
+    counts["WF"][0, 0] = 2
+    counts["BF"][0, 0] = 3
+
+    # One composite: White Female vs Black Female
+    pairs = pd.DataFrame([{
+        "g1": "WF",
+        "q1": "QWF",
+        "g2": "BF",
+        "q2": "QBF",
+    }])
+
+    # Calculate composite bootstrap weight
+    weights = composite_weights(pairs, people, counts)
+
+    # Expected: 2 * 3 = 6
+    np.testing.assert_array_equal(
+        weights,
+        np.array([[6.0]], dtype=np.float32)
+    )

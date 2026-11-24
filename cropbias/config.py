@@ -106,11 +106,17 @@ VARIANTS = ["orig"] + sorted(set(PERTURB_MAIN) | set(PERTURB_GEOM))
 # ----------------------------------------------------------------------------
 # Design
 # ----------------------------------------------------------------------------
-SPLIT_SEED = 0
+
+SPLIT_SEED = int(os.environ.get("CROPBIAS_SPLIT_SEED", "0"))
+
+
 VAL_FRACTION = 0.30
 PAIRS_PER_COMPARISON = {"val": int(os.environ.get("CROPBIAS_PAIRS_VAL", 1000)),
                         "test": int(os.environ.get("CROPBIAS_PAIRS_TEST", 4000))}
-PAIR_SEED = {"val": 101, "test": 202}
+PAIR_SEED = {
+    "val": int(os.environ.get("CROPBIAS_PAIR_SEED_VAL", "101")),
+    "test": int(os.environ.get("CROPBIAS_PAIR_SEED_TEST", "202")),
+}
 DEEPGAZE_PER_COMPARISON = int(os.environ.get("CROPBIAS_DG_PER_COMP", 500))  # test composites per comparison scored by DeepGaze IIE
 BOOTSTRAP_ITERS = 2000
 BOOTSTRAP_SEED = 7

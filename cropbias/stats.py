@@ -1,3 +1,4 @@
+
 """Uncertainty from resampling people, not seeds.
 
 Every composite pairs one person from each group, and each person appears in many
