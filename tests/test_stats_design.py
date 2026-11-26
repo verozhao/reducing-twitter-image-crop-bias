@@ -126,3 +126,34 @@ def test_bootstrap_weights_wf_bf():
         weights,
         np.array([[6.0]], dtype=np.float32)
     )
+
+
+def test_composites_stage_rebuilds_a_missing_jpeg_without_duplicating_its_layout_row(tmp_path, monkeypatch):
+    """A pair whose JPEG went missing is rebuilt, and its old layout row is replaced, not repeated."""
+    import argparse
+    from types import SimpleNamespace
+
+    from PIL import Image
+
+    import cropbias.__main__ as main
+    import cropbias.composites as comp
+
+    data, work = tmp_path / "data", tmp_path / "work"
+    data.mkdir()
+    monkeypatch.setattr(C, "DATA", data)
+    monkeypatch.setattr(C, "WORK", work)
+    ids = ["val_BFBM_00000", "val_BFBM_00001"]
+    pd.DataFrame({"pair_id": ids, "split": "val", "comparison": "BF-BM", "g1": "BF", "g2": "BM",
+                  "q1": ["QBF0", "QBF1"], "q2": ["QBM0", "QBM1"], "g1_left": [True, False]}
+                 ).to_csv(data / "pairs.csv", index=False)
+    pd.DataFrame({"qid": ["QBF0", "QBF1", "QBM0", "QBM1"]}).to_csv(data / "faces.csv", index=False)
+    lay = SimpleNamespace(W=10, H=5, w_left=5, face1=(1, 2), face2=(6, 7), face1_y=(1, 2), face2_y=(1, 2))
+    monkeypatch.setattr(comp, "composite_path", lambda pid, split: work / "composites" / split / f"{pid}.jpg")
+    monkeypatch.setattr(comp, "build", lambda pr, faces: (Image.new("RGB", (10, 5)), lay))
+
+    args = argparse.Namespace(limit=None)
+    main.stage_composites(args)                                     # builds both pairs
+    (work / "composites" / "val" / f"{ids[0]}.jpg").unlink()        # one JPEG goes missing
+    main.stage_composites(args)                                     # rebuilds only that one
+    out = pd.read_csv(work / "composites" / "layout_val.csv", index_col=0)
+    assert sorted(out.index) == ids
