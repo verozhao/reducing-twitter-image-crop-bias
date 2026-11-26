@@ -77,11 +77,6 @@ Audit values come from the raw counts Twitter released for its fixed-height sett
 
 ![Suggestions](results/figures/fig4_topk.png)
 
-**5. Checks.**
-- Stability fallback rates are similar for Black and White people of the same gender, 13.6% to 15.9% across comparisons when any changed copy triggers it (`results/square/fallback_by_group.csv`).
-- The face step drops 19% of Black men, 15% of White men, 10% of Black women and 9% of White women (`results/face_detection_by_group.csv`).
-- 3:4 crops give the same results (`results/portrait/`). Our crops match the crops printed by Twitter's program in 100% of composites.
-
 **5. Face-preserving previews eliminate exclusive-face gaps by retaining both detected faces.** The earlier analysis found that near-ties account for little of the gap, so changing decisions only when saliency scores are close cannot address many high-margin exclusions. Stability fallback responds when small image changes alter the winner; it can leave a stable crop that excludes one person. We therefore tested a different display rule: search every pixel-aligned square position for a crop retaining at least 90% of each detected face box, and choose the feasible square containing the most Twitter saliency mass. If no square fits both faces, fit the full image inside the square preview with padding. This rule uses the existing face detections and saliency map; it needs no training or demographic labels. Unlike the existing top-*k* analysis, it produces one automatic preview.
 
 The table uses the same 4,000 held-out pairs per comparison as the argmax baseline. BF = Black women, BM = Black men, WF = White women, and WM = White men. A positive gap favors the first-named group, and a negative gap favors the second. The gap is half the difference between the rates of *only first face kept* and *only second face kept*, in percentage points.
@@ -98,9 +93,8 @@ The table uses the same 4,000 held-out pairs per comparison as the argmax baseli
 The zero face-kept gap is **by construction**, conditional on correct detected face boxes: a feasible square keeps both faces, and a fallback displays the whole image. It is not evidence that Twitter's saliency scores became unbiased, and this face-kept gap is not Twitter's top-point audit metric. A square is feasible in only 38.275%–46.150% of pairs; the rest use the full-image fallback. The higher 95.71%–96.38% saliency retention largely reflects that fallback, which counts as retaining 100% of the original image's saliency mass. It does not measure whether the downsized padded preview remains readable. Report fallback frequency, preview scale, padding, and face-detector errors alongside the gap before claiming a practical improvement. The current evaluation covers square previews only and lacks an independent DeepGaze score without its saved test outputs. Code and setup: [FACE_PRESERVING.md](FACE_PRESERVING.md).
 
 **6. Checks.**
-- Stability fallback shows the full photo equally often for every group, about 14% to 16% with any change. Brightness changes do not make it fall back more often for Black people (Black men minus White men: 1.1 points, -0.1 to 2.4).
-- The face detector misses men's faces more often than women's (9% to 11% vs 3% to 4% of photos), with no race difference within gender (`results/face_detection_by_group.csv`).
->>>>>>> Add face-preserving and saliency correction experiments
+- Stability fallback rates are similar for Black and White people of the same gender, 13.6% to 15.9% across comparisons when any changed copy triggers it (`results/square/fallback_by_group.csv`).
+- The face step drops 19% of Black men, 15% of White men, 10% of Black women and 9% of White women (`results/face_detection_by_group.csv`).
 - 3:4 crops give the same results (`results/portrait/`). Our crops match the crops printed by Twitter's program in 100% of composites.
 
 ## Data
@@ -154,3 +148,12 @@ Updated 2026-11-24
 - **Photo properties** (`python -m cropbias sources`, `results/square/gap_sources.csv`, exploratory). Color and contrast account for about a third of the gender gap. At equal face width, brightness, contrast and color the gap is 7.1 (4.0 to 10.2).
 - **FairFace** (`./scripts/run_fairface.sh`, `results/fairface/`). Validation photos of people labeled Black or White and aged 20 or older: 2,294 people, 2,000 test pairs per comparison, no DeepGaze. The gender gap is 4.8 (1.3 to 8.1). With gender held fixed the race gap is 4.2 toward White people (0.5 to 8.0), close to the color-only WikiCeleb value. Two suggestions in random order again remove the first-suggestion gap.
 - Sampled suggestions use 256 seeded draws per photo, the one rule not scored exactly.
+
+## Learned map correction
+
+A small network trained on validation people adjusts Twitter's map before the argmax crop ([MAP_CORRECTION.md](MAP_CORRECTION.md)).
+
+Updated 2026-11-26
+
+- On the 24,000 test pairs of held-out people it changes about 20% of crops (`results/map_correction/summary_test.csv`). Gaps involving Black women shrink: Black women vs White men from 11.1 to 0.0, and Black women vs Black men from 9.2 to 3.2. Two new White-favored race gaps appear, both significant: White women vs Black women from 1.7 to 9.2, and White men vs Black men from -3.5 to 2.4. DeepGaze density inside the crop drops by up to 2.3 points.
+- The face-preserving summary was rerun with the corrected bootstrap and the DeepGaze cache (`results/face_preserving/summary_test.csv`). Its point values are unchanged. DeepGaze keeps 62% to 64% of its density in the argmax crop and 93% to 94% in the face-preserving preview, mostly through the full-image fallback.
