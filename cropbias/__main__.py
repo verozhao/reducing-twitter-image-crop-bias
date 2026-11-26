@@ -127,6 +127,8 @@ def stage_composites(args):
                          "f2x0": lay.face2[0], "f2x1": lay.face2[1], "f1y0": lay.face1_y[0],
                          "f1y1": lay.face1_y[1], "f2y0": lay.face2_y[0], "f2y1": lay.face2_y[1]})
         new = pd.DataFrame(rows).set_index("pair_id") if rows else pd.DataFrame()
+        # A rebuilt pair replaces its old layout row, so no pair is listed twice.
+        old = old[~old.index.isin(new.index)]
         pd.concat([old, new]).to_csv(lay_path)
 
 
