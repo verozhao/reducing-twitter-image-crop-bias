@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import pickle
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -59,30 +60,37 @@ def transform(img: Image.Image, seam: int, kind: str) -> Image.Image:
     return Image.fromarray(np.concatenate(result, axis=1))
 
 
-def preprocess_scores(split: str, kind: str, limit: int | None = None, refresh: bool = False):
+def preprocess_scores(split: str, kind: str, limit: int | None = None, refresh: bool = False,
+                      workers: int = 1):
     if kind not in VARIANTS:
         raise ValueError(f"select one of {VARIANTS}")
     pairs, layout, _ = inputs(split, limit)
     target = C.WORK / "map_correction" / "preprocess" / split / f"{kind}.pkl"
     target.parent.mkdir(parents=True, exist_ok=True)
     scores = pickle.loads(target.read_bytes()) if target.exists() else {}
-    for i, pid in enumerate(pairs.pair_id):
-        if pid in scores and not refresh:
-            continue
+    todo = [pid for pid in pairs.pair_id if refresh or pid not in scores]
+
+    def score(pid):
         img = Image.open(composite_path(pid, split)).convert("RGB")
         im = transform(img, int(layout.loc[pid, "w_left"]), kind)
         with tempfile.TemporaryDirectory(dir=C.WORK) as tmp:
             path = Path(tmp) / "changed.jpg"
             im.save(path, "JPEG", quality=C.JPEG_QUALITY)
-            scores[pid] = run_binary(path, aspects=[C.ASPECT_MAIN])
-        if (i + 1) % 200 == 0:
-            tmp = target.with_suffix(".tmp")
-            tmp.write_bytes(pickle.dumps(scores, protocol=pickle.HIGHEST_PROTOCOL))
-            tmp.replace(target)
-            print(f"{kind} {split}: {i+1}/{len(pairs)}", flush=True)
-    tmp = target.with_suffix(".tmp")
-    tmp.write_bytes(pickle.dumps(scores, protocol=pickle.HIGHEST_PROTOCOL))
-    tmp.replace(target)
+            return pid, run_binary(path, aspects=[C.ASPECT_MAIN])
+
+    def save():
+        tmp = target.with_suffix(".tmp")
+        tmp.write_bytes(pickle.dumps(scores, protocol=pickle.HIGHEST_PROTOCOL))
+        tmp.replace(target)
+
+    # Twitter's program runs as its own process, so threads can score several copies at once.
+    with ThreadPoolExecutor(max(1, workers)) as ex:
+        for i, (pid, out) in enumerate(ex.map(score, todo), 1):
+            scores[pid] = out
+            if i % 1000 == 0:
+                save()
+                print(f"{kind} {split}: {i}/{len(todo)}", flush=True)
+    save()
     return target
 
 
@@ -274,9 +282,40 @@ def _batch_losses(model, X, S, M, strength, temperature):
     return signed, fidelity, smooth
 
 
+def fairness_term(signed_means, objective: str = "mean_square"):
+    """Penalty on the per-comparison mean signed gaps: their mean square (the original
+    objective) or the largest square (maximin: no comparison may be traded for another)."""
+    import torch
+    squares = torch.stack(list(signed_means)).square()
+    if objective == "mean_square":
+        return squares.mean()
+    if objective == "maximin":
+        return squares.max()
+    raise ValueError(objective)
+
+
+def _hard_gaps(model, tuning, ids, layout, original, strength):
+    """Gap per comparison from the real crop rule: hard argmax on the corrected full grid."""
+    import torch
+    import torch.nn.functional as F
+    gaps = {}
+    with torch.no_grad():
+        for comp, (X, _, _) in tuning.items():
+            delta = model(X, strength)
+            vals = []
+            for k, pid in enumerate(ids[comp]):
+                sal = original[pid]
+                d = F.interpolate(delta[k][None, None], size=sal.S.shape, mode="bilinear",
+                                  align_corners=False)[0, 0].cpu().numpy()
+                vals.append(crop_stats(layout.loc[pid], sal, sal.S + d)["gap"])
+            gaps[comp] = float(np.mean(vals))
+    return gaps
+
+
 def train(pairs, layout, original, out: Path, *, epochs=12, per_group=8,
           strength=1.0, temperature=0.2, fairness=1.0, fidelity=0.1,
-          smoothness=0.03, lr=0.0005, seed=43, device="cpu"):
+          smoothness=0.03, lr=0.0005, seed=43, device="cpu",
+          objective="mean_square", select="soft"):
     import torch
     torch.manual_seed(seed)
     dataset = pd.read_csv(C.DATA / "dataset.csv")
@@ -285,6 +324,7 @@ def train(pairs, layout, original, out: Path, *, epochs=12, per_group=8,
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     training = dict(_batch_examples(fit, layout, original, "val", device))
     tuning = dict(_batch_examples(dev, layout, original, "val", device))
+    dev_ids = {comp: list(sub.pair_id) for comp, sub in dev.groupby("comparison")}
     rng = np.random.default_rng(seed)
     best = float("inf")
     out.mkdir(parents=True, exist_ok=True)
@@ -302,7 +342,7 @@ def train(pairs, layout, original, out: Path, *, epochs=12, per_group=8,
                                                      strength, temperature)
                 signed_means.append(signed.mean())
                 penalties.append(fidelity*fid + smoothness*smooth)
-            loss = fairness * torch.stack(signed_means).square().mean() + torch.stack(penalties).mean()
+            loss = fairness * fairness_term(signed_means, objective) + torch.stack(penalties).mean()
             opt.zero_grad()
             loss.backward()
             opt.step()
@@ -315,14 +355,21 @@ def train(pairs, layout, original, out: Path, *, epochs=12, per_group=8,
                 dev_fid.append(float(fid))
             # Model selection is based ONLY on held-out validation people.
             criterion = float(np.mean(np.abs(dev_gaps)) + fidelity*np.mean(dev_fid))
+        hard = _hard_gaps(model, tuning, dev_ids, layout, original, strength)
+        hard_max = float(max(abs(v) for v in hard.values()))
+        if select == "hard":           # select on the real crop outcome, worst comparison first
+            criterion = hard_max
         history.append({"epoch": epoch, "dev_objective": criterion,
                         "dev_mean_abs_soft_gap": float(np.mean(np.abs(dev_gaps))),
-                        "dev_correction_mse": float(np.mean(dev_fid))})
+                        "dev_correction_mse": float(np.mean(dev_fid)),
+                        "dev_hard_max_abs_gap": hard_max,
+                        **{f"dev_hard_gap_{c}": v for c, v in hard.items()}})
         print(history[-1], flush=True)
         if criterion < best:
             best = criterion
             torch.save({"state_dict": model.state_dict(), "strength": strength,
                         "temperature": temperature, "seed": seed,
+                        "objective": objective, "select": select,
                         "fit_people": sorted(set(fit.q1) | set(fit.q2)),
                         "dev_people": sorted(set(dev.q1) | set(dev.q2)),
                         "epoch": epoch}, out / "best.pt")

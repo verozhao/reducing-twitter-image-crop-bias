@@ -71,3 +71,7 @@ For an ablation, vary one training weight at a time and use distinct `--output` 
 - Birhane, Prabhu, and Whaley (2022), [Auditing Saliency Cropping Algorithms](https://openaccess.thecvf.com/content/WACV2022/papers/Birhane_Auditing_Saliency_Cropping_Algorithms_WACV_2022_paper.pdf): demonstrates sensitivity to lighting/background and image construction, motivating paired preprocessing diagnostics.
 - Huang et al. (2015), [SALICON: Reducing the Semantic Gap](https://openaccess.thecvf.com/content_iccv_2015/papers/Huang_SALICON_Reducing_the_ICCV_2015_paper.pdf): saliency networks trained against attention data; motivation for a fixation-quality objective, *not* evidence for the proposed fairness loss.
 - Hanel et al. (2022), [Enhancing Fairness of Visual Attribute Predictors](https://openaccess.thecvf.com/content/ACCV2022/papers/Hanel_Enhancing_Fairness_of_Visual_Attribute_Predictors_ACCV_2022_paper.pdf): example of fairness regularization for image attribute prediction. The present loss is an adaptation to cropping and has not been validated by that paper.
+
+## Added options
+
+`preprocess --workers N` scores N changed copies at once (same maps as one at a time). `train --objective maximin` penalizes only the largest comparison gap, and `train --select hard` picks the epoch by the largest hard-argmax gap on the held-out validation people. `eval --output DIR` keeps several evaluations apart. `scripts/run_score_fixes.sh` runs the input checks, the four preset settings, the choice on validation, one test evaluation, the equalized-score bound and the summary.

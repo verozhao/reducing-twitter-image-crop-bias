@@ -24,6 +24,7 @@ def main():
     pp.add_argument("--limit", type=int, help="first N existing pairs per comparison")
     pp.add_argument("--refresh", action="store_true", help="re-score all requested copies")
     pp.add_argument("--bootstrap-iters", type=int, default=1000)
+    pp.add_argument("--workers", type=int, default=1, help="copies scored at once by Twitter's program")
     tr = subs.add_parser("train", help="fit on validation people only, select epoch on disjoint people")
     tr.add_argument("--limit", type=int)
     tr.add_argument("--epochs", type=int, default=12)
@@ -37,19 +38,25 @@ def main():
     tr.add_argument("--seed", type=int, default=43)
     tr.add_argument("--device", default="cpu", choices=("cpu", "cuda", "mps"))
     tr.add_argument("--output", type=Path, default=C.WORK / "map_correction" / "model")
+    tr.add_argument("--objective", choices=("mean_square", "maximin"), default="mean_square",
+                    help="penalize the mean squared gap over comparisons, or only the largest one")
+    tr.add_argument("--select", choices=("soft", "hard"), default="soft",
+                    help="pick the epoch by the soft training proxy, or by the largest hard-argmax gap")
     ev = subs.add_parser("eval", help="compare corrected vs original argmax on held-out people")
     ev.add_argument("--split", choices=("val", "test"), default="test")
     ev.add_argument("--checkpoint", type=Path, default=C.WORK / "map_correction" / "model" / "best.pt")
     ev.add_argument("--device", default="cpu", choices=("cpu", "cuda", "mps"))
     ev.add_argument("--limit", type=int)
     ev.add_argument("--bootstrap-iters", type=int, default=1000)
+    ev.add_argument("--output", type=Path, default=None,
+                    help="folder for summary.csv and per_pair.csv (default work/map_correction/evaluation/<split>)")
     args = ap.parse_args()
     if getattr(args, "limit", None) is not None and args.limit < 1:
         ap.error("--limit must be positive")
     if getattr(args, "bootstrap_iters", 1000) < 50:
         ap.error("--bootstrap-iters must be >= 50")
     if args.action == "preprocess":
-        path = preprocess_scores(args.split, args.variant, args.limit, args.refresh)
+        path = preprocess_scores(args.split, args.variant, args.limit, args.refresh, args.workers)
         pairs, lay, original = inputs(args.split, args.limit)
         new = pickle.loads(path.read_bytes())
         target = C.WORK / "map_correction" / "preprocess_eval" / args.split / args.variant
@@ -64,7 +71,8 @@ def main():
         train(pairs, lay, original, args.output, epochs=args.epochs,
               per_group=args.per_group, strength=args.strength, temperature=args.temperature,
               fairness=args.fairness, fidelity=args.fidelity, smoothness=args.smoothness,
-              lr=args.lr, seed=args.seed, device=args.device)
+              lr=args.lr, seed=args.seed, device=args.device,
+              objective=args.objective, select=args.select)
     else:
         pairs, lay, original = inputs(args.split, args.limit)
         model, state = load_model(args.checkpoint, args.device)
@@ -81,7 +89,7 @@ def main():
             new[pid] = predict(model, pid, original[pid], args.split, state["strength"], args.device)
             if (i + 1) % 1000 == 0:
                 print(f"corrected {i+1}/{len(pairs)}", flush=True)
-        target = C.WORK / "map_correction" / "evaluation" / args.split
+        target = args.output or C.WORK / "map_correction" / "evaluation" / args.split
         report = evaluate_scores(pairs, lay, original, new, args.split, target, args.bootstrap_iters)
         print(report.to_string(index=False))
         print(f"Saved {target / 'summary.csv'}")
