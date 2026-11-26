@@ -82,6 +82,27 @@ Audit values come from the raw counts Twitter released for its fixed-height sett
 - The face step drops 19% of Black men, 15% of White men, 10% of Black women and 9% of White women (`results/face_detection_by_group.csv`).
 - 3:4 crops give the same results (`results/portrait/`). Our crops match the crops printed by Twitter's program in 100% of composites.
 
+**5. Face-preserving previews eliminate exclusive-face gaps by retaining both detected faces.** The earlier analysis found that near-ties account for little of the gap, so changing decisions only when saliency scores are close cannot address many high-margin exclusions. Stability fallback responds when small image changes alter the winner; it can leave a stable crop that excludes one person. We therefore tested a different display rule: search every pixel-aligned square position for a crop retaining at least 90% of each detected face box, and choose the feasible square containing the most Twitter saliency mass. If no square fits both faces, fit the full image inside the square preview with padding. This rule uses the existing face detections and saliency map; it needs no training or demographic labels. Unlike the existing top-*k* analysis, it produces one automatic preview.
+
+The table uses the same 4,000 held-out pairs per comparison as the argmax baseline. BF = Black women, BM = Black men, WF = White women, and WM = White men. A positive gap favors the first-named group, and a negative gap favors the second. The gap is half the difference between the rates of *only first face kept* and *only second face kept*, in percentage points.
+
+| Comparison | Argmax face-kept gap (points) | Face-preserving gap (points) | Square feasible (%) | Full-image fallback (%) | Argmax saliency retained (%) | Face-preserving saliency retained (%) |
+|---|---:|---:|---:|---:|---:|---:|
+| BF–BM | 9.2000 | 0.0 | 43.175 | 56.825 | 73.28 | 95.81 |
+| WF–BF | 1.7375 | 0.0 | 40.625 | 59.375 | 72.96 | 96.38 |
+| BF–WM | 11.0750 | 0.0 | 46.150 | 53.850 | 74.89 | 95.88 |
+| WF–BM | 10.2750 | 0.0 | 38.275 | 61.725 | 72.19 | 96.16 |
+| WM–BM | −3.5125 | 0.0 | 43.000 | 57.000 | 73.54 | 95.71 |
+| WF–WM | 12.0375 | 0.0 | 40.600 | 59.400 | 74.43 | 96.11 |
+
+The zero face-kept gap is **by construction**, conditional on correct detected face boxes: a feasible square keeps both faces, and a fallback displays the whole image. It is not evidence that Twitter's saliency scores became unbiased, and this face-kept gap is not Twitter's top-point audit metric. A square is feasible in only 38.275%–46.150% of pairs; the rest use the full-image fallback. The higher 95.71%–96.38% saliency retention largely reflects that fallback, which counts as retaining 100% of the original image's saliency mass. It does not measure whether the downsized padded preview remains readable. Report fallback frequency, preview scale, padding, and face-detector errors alongside the gap before claiming a practical improvement. The current evaluation covers square previews only and lacks an independent DeepGaze score without its saved test outputs. Code and setup: [FACE_PRESERVING.md](FACE_PRESERVING.md).
+
+**6. Checks.**
+- Stability fallback shows the full photo equally often for every group, about 14% to 16% with any change. Brightness changes do not make it fall back more often for Black people (Black men minus White men: 1.1 points, -0.1 to 2.4).
+- The face detector misses men's faces more often than women's (9% to 11% vs 3% to 4% of photos), with no race difference within gender (`results/face_detection_by_group.csv`).
+>>>>>>> Add face-preserving and saliency correction experiments
+- 3:4 crops give the same results (`results/portrait/`). Our crops match the crops printed by Twitter's program in 100% of composites.
+
 ## Data
 
 Twitter released only the recipe for its WikiCeleb dataset, so we rebuild it with that recipe: people on Wikidata with a Library of Congress ID, a photo, male or female gender and an ethnic group, no photos dated before 1950, and Twitter's own map from 13 ethnic groups to race. The query ran on 2026-11-22, so counts differ from the audit's 2020 snapshot (`results/people_counts.csv`, `results/dataset_flow.csv`). Each photo is a 500 px or smaller Commons thumbnail with exactly one clear face (MTCNN). People are split 30% validation and 70% test within each group. The repo publishes counts and results only. Photos and per-person tables (Wikidata IDs with race and gender labels, splits and pairs) stay on the machine that ran the pipeline, in `data/` and `work/`.
