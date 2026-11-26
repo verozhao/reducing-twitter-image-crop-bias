@@ -25,5 +25,20 @@ $PY -m scripts.score_fixes select
 chosen=$(cat work/map_correction/grid/chosen.txt)
 $MC eval --split test --checkpoint "work/map_correction/grid/$chosen/best.pt" \
   --output work/map_correction/evaluation_selected/test --bootstrap-iters 2000
+for s in 44 45; do                         # two more training seeds of the original setting
+  $MC train --epochs 12 --seed "$s" --output "work/map_correction/seeds/seed$s"
+  $MC eval --split test --checkpoint "work/map_correction/seeds/seed$s/best.pt" \
+    --output "work/map_correction/evaluation_seed$s/test" --bootstrap-iters 2000
+done
 $PY -m scripts.score_fixes bound
 $PY -m scripts.score_fixes summary
+
+# The same bound on FairFace, if scripts/run_fairface.sh has run
+if [ -f work/fairface/work/eval/val_desc.csv ]; then
+  export CROPBIAS_RUN_DIR=work/fairface CROPBIAS_IMAGES=work/fairface/images
+  export CROPBIAS_PAIRS_TEST=2000 CROPBIAS_PAIRS_VAL=500
+  $PY -m scripts.score_fixes bound
+  $PY -m scripts.score_fixes summary
+  mkdir -p results/fairface/score_fixes
+  cp work/fairface/results/score_fixes/*.csv results/fairface/score_fixes/
+fi
