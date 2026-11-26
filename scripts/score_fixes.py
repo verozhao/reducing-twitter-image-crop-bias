@@ -57,6 +57,10 @@ def select() -> None:
 
 def summary() -> None:
     have = {name: pd.read_csv(d / "per_pair.csv") for name, d in SOURCES.items() if (d / "per_pair.csv").exists()}
+    for d in sorted((C.WORK / "map_correction").glob("evaluation_seed*/test")):   # extra training seeds
+        if (d / "per_pair.csv").exists():
+            seed = d.parent.name.removeprefix("evaluation_seed")
+            have[f"learned correction, training seed {seed}"] = pd.read_csv(d / "per_pair.csv")
     if not have:
         raise SystemExit("no per-pair results yet")
     orig, chosen = "learned correction, original objective", "learned correction, setting chosen on validation"
