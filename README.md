@@ -157,3 +157,22 @@ Updated 2026-11-26
 
 - On the 24,000 test pairs of held-out people it changes about 20% of crops (`results/map_correction/summary_test.csv`). Gaps involving Black women shrink: Black women vs White men from 11.1 to 0.0, and Black women vs Black men from 9.2 to 3.2. Two new White-favored race gaps appear, both significant: White women vs Black women from 1.7 to 9.2, and White men vs Black men from -3.5 to 2.4. DeepGaze density inside the crop drops by up to 2.3 points.
 - The face-preserving summary was rerun with the corrected bootstrap and the DeepGaze cache (`results/face_preserving/summary_test.csv`). Its point values are unchanged. DeepGaze keeps 62% to 64% of its density in the argmax crop and 93% to 94% in the face-preserving preview, mostly through the full-image fallback.
+
+## Score fixes
+
+Three checks on where a fix has to act, on the same 24,000 test pairs as the argmax baseline (`scripts/run_score_fixes.sh`, `results/score_fixes/summary_test.csv`).
+
+Updated 2026-11-26
+
+| Fix | Gender gap | Race gap, gender held fixed | Largest of the six gaps | Crops changed |
+|---|---:|---:|---:|---:|
+| Argmax (Twitter) | 10.6 | -0.9 | 12.0 | 0% |
+| Grayscale input | 8.6 | -0.4 | 13.1 | 18% |
+| Matched brightness and contrast | 9.6 | 0.7 | 10.4 | 24% |
+| Learned correction | 6.0 | 5.8 | 11.4 | 20% |
+| Equalized group scores (uses labels, a bound) | -1.8 | -0.6 | 3.3 | 9% |
+
+- The gender gap is the mean of the four cross-gender comparisons, and the race gap the mean of White vs Black women and White vs Black men. Intervals and paired changes from the people-level bootstrap are in the CSV.
+- Removing each group's average face-score effect, estimated on validation people, brings every gap to about zero while changing 9% of crops. The gap is a steady per-group score shift. This bound needs labels at crop time, which a deployed system should not use.
+- Grayscale and matched brightness and contrast lower the gender gap by about 2 and 1 points, close to the color and contrast shares from the photo-property model. Neither change is significant.
+- The learned correction lowers the gender gap by 4.6 points (2.5 to 6.9) but adds a White-favored race gap of 6.6 points (4.3 to 9.1), so its largest gap barely moves. A random switch of 20% of crops would remove about 40% of every gap, about what it removes from the gender gap. Of four preset settings (mean-square or maximin objective, temperature 0.2 or 0.05), the original one did best on held-out validation people, where the same race gap appeared (`results/score_fixes/correction_settings_validation.csv`).
