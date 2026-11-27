@@ -7,6 +7,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PY=.venv/bin/python
+[ -x "$PY" ] || { echo "Create the environment first (see README)"; exit 1; }
+[ -x third_party/twitter/candidate_crops ] || ./scripts/get_twitter_model.sh
 RAW=work/fairface_raw
 mkdir -p "$RAW"
 # Google Drive file ids from https://github.com/joojs/fairface

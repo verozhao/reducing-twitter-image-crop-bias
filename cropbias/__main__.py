@@ -180,7 +180,12 @@ def stage_analyze(args):
 
 def stage_fairface(args):
     """Prepare FairFace as a second dataset (run with CROPBIAS_RUN_DIR and CROPBIAS_IMAGES set)."""
+    import os
     from .fairface import prepare
+    if not (os.environ.get("CROPBIAS_RUN_DIR") and os.environ.get("CROPBIAS_IMAGES")) \
+            or C.DATA == C.ROOT / "data" or C.IMAGES == C.WORK_SHARED / "images":
+        raise SystemExit("fairface needs its own CROPBIAS_RUN_DIR and CROPBIAS_IMAGES (see scripts/run_fairface.sh); "
+                         "otherwise it would overwrite the main data/ tables and work/images/")
     raw = C.WORK_SHARED / "fairface_raw"
     people = prepare(raw / "images", raw / "fairface_label_val.csv")
     print(people.group.value_counts().to_string())

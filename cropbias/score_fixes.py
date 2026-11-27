@@ -98,7 +98,11 @@ def method_rows(name: str, df: pd.DataFrame, comp: np.ndarray, W: np.ndarray) ->
     for label, cs in ((GENDER, CROSS_GENDER), (RACE, WITHIN_GENDER)):
         i = [COMPS.index(c) for c in cs]
         add(label, bp[i].mean(), bb[:, i].mean(axis=1), fp[i].mean(), fb[:, i].mean(axis=1))
-    add(LARGEST, np.abs(bp).max(), np.abs(bb).max(axis=1), np.abs(fp).max(), np.abs(fb).max(axis=1))
+    # The bootstrap of a maximum is biased upward and always lies above zero, so its interval
+    # and its p-value against zero mean little. Only the point values are reported.
+    big_a, big_f = np.abs(bp).max(), np.abs(fp).max()
+    for value, pt in (("argmax", big_a), ("fixed", big_f), ("change", big_f - big_a)):
+        rows.append({"method": name, "measure": LARGEST, "value": value, "est": pt})
     changed = (df.baseline_outcome.to_numpy() != df.new_outcome.to_numpy()).mean()
     no_face = (df.new_outcome.to_numpy() == 0).mean()
     rows.append({"method": name, "measure": "share of crops changed", "value": "fixed", "est": changed})

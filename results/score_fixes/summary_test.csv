@@ -23,9 +23,9 @@ method,measure,value,est,lo,hi,se,p
 "learned correction, original objective","race (White - Black), mean of the two same-gender comparisons",argmax,-0.008875000000000001,-0.048217120208248525,0.028035890616714035,0.01993200081339623,0.6506746626686657
 "learned correction, original objective","race (White - Black), mean of the two same-gender comparisons",fixed,0.0575625,0.019144362511027167,0.09437084821397979,0.019640118595078648,0.00399800099950025
 "learned correction, original objective","race (White - Black), mean of the two same-gender comparisons",change,0.06643750000000001,0.04251001195243821,0.09131364816041171,0.012576114168832817,0.0009995002498750624
-"learned correction, original objective",largest absolute gap of the six comparisons,argmax,0.120375,0.0901169578723056,0.18351789879945427,0.02363345578569496,0.0009995002498750624
-"learned correction, original objective",largest absolute gap of the six comparisons,fixed,0.114375,0.06057029976236739,0.1748158071703611,0.029594573739375667,0.0009995002498750624
-"learned correction, original objective",largest absolute gap of the six comparisons,change,-0.0059999999999999915,-0.06673439865277876,0.030831685602002723,0.024582547200926157,0.5577211394302849
+"learned correction, original objective",largest absolute gap of the six comparisons,argmax,0.120375,,,,
+"learned correction, original objective",largest absolute gap of the six comparisons,fixed,0.114375,,,,
+"learned correction, original objective",largest absolute gap of the six comparisons,change,-0.0059999999999999915,,,,
 "learned correction, original objective",share of crops changed,fixed,0.20279166666666668,,,,
 "learned correction, original objective",share of crops with no face,fixed,0.0060416666666666665,,,,
 grayscale input,BF-BM,argmax,0.092,0.04949538822818116,0.13262039679185506,0.021738873769878132,0.0009995002498750624
@@ -52,9 +52,9 @@ grayscale input,"gender (women - men), mean of the four cross-gender comparisons
 grayscale input,"race (White - Black), mean of the two same-gender comparisons",argmax,-0.008875000000000001,-0.048217120208248525,0.028035890616714035,0.01993200081339623,0.6506746626686657
 grayscale input,"race (White - Black), mean of the two same-gender comparisons",fixed,-0.0043125,-0.04304275165533976,0.03356081054238882,0.019939928744550646,0.8275862068965517
 grayscale input,"race (White - Black), mean of the two same-gender comparisons",change,0.004562500000000001,-0.02146791910010364,0.03184127070242736,0.013239676900185056,0.7396301849075462
-grayscale input,largest absolute gap of the six comparisons,argmax,0.120375,0.0901169578723056,0.18351789879945427,0.02363345578569496,0.0009995002498750624
-grayscale input,largest absolute gap of the six comparisons,fixed,0.131125,0.08053563616349539,0.1889710621118562,0.028163555536625647,0.0009995002498750624
-grayscale input,largest absolute gap of the six comparisons,change,0.010749999999999996,-0.03835852847525765,0.03742323790380832,0.01979528250510865,0.9775112443778111
+grayscale input,largest absolute gap of the six comparisons,argmax,0.120375,,,,
+grayscale input,largest absolute gap of the six comparisons,fixed,0.131125,,,,
+grayscale input,largest absolute gap of the six comparisons,change,0.010749999999999996,,,,
 grayscale input,share of crops changed,fixed,0.18216666666666667,,,,
 grayscale input,share of crops with no face,fixed,0.005125,,,,
 matched brightness and contrast,BF-BM,argmax,0.092,0.04949538822818116,0.13262039679185506,0.021738873769878132,0.0009995002498750624
@@ -81,9 +81,9 @@ matched brightness and contrast,"gender (women - men), mean of the four cross-ge
 matched brightness and contrast,"race (White - Black), mean of the two same-gender comparisons",argmax,-0.008875000000000001,-0.048217120208248525,0.028035890616714035,0.01993200081339623,0.6506746626686657
 matched brightness and contrast,"race (White - Black), mean of the two same-gender comparisons",fixed,0.006625000000000001,-0.0319204820794243,0.04491856340899491,0.019559315088630257,0.7266366816591704
 matched brightness and contrast,"race (White - Black), mean of the two same-gender comparisons",change,0.015500000000000002,-0.017172944216060228,0.04866511154385142,0.016861363076847265,0.3458270864567716
-matched brightness and contrast,largest absolute gap of the six comparisons,argmax,0.120375,0.0901169578723056,0.18351789879945427,0.02363345578569496,0.0009995002498750624
-matched brightness and contrast,largest absolute gap of the six comparisons,fixed,0.104,0.07812569885664478,0.17368697696681762,0.023921013756937032,0.0009995002498750624
-matched brightness and contrast,largest absolute gap of the six comparisons,change,-0.016375,-0.05286613619089876,0.029613112527633483,0.021160371198217738,0.544727636181909
+matched brightness and contrast,largest absolute gap of the six comparisons,argmax,0.120375,,,,
+matched brightness and contrast,largest absolute gap of the six comparisons,fixed,0.104,,,,
+matched brightness and contrast,largest absolute gap of the six comparisons,change,-0.016375,,,,
 matched brightness and contrast,share of crops changed,fixed,0.2415,,,,
 matched brightness and contrast,share of crops with no face,fixed,0.0025833333333333333,,,,
 "equalized group scores (uses labels, bound)",BF-BM,argmax,0.092,0.04949538822818116,0.13262039679185506,0.021738873769878132,0.0009995002498750624
@@ -110,9 +110,9 @@ matched brightness and contrast,share of crops with no face,fixed,0.002583333333
 "equalized group scores (uses labels, bound)","race (White - Black), mean of the two same-gender comparisons",argmax,-0.008875000000000001,-0.048217120208248525,0.028035890616714035,0.01993200081339623,0.6506746626686657
 "equalized group scores (uses labels, bound)","race (White - Black), mean of the two same-gender comparisons",fixed,-0.005625,-0.04490180354427077,0.03160087954064714,0.01991399968987857,0.7716141929035483
 "equalized group scores (uses labels, bound)","race (White - Black), mean of the two same-gender comparisons",change,0.003250000000000001,-0.002763505398041529,0.009337705513072881,0.0030563250381901693,0.28585707146426786
-"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,argmax,0.120375,0.0901169578723056,0.18351789879945427,0.02363345578569496,0.0009995002498750624
-"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,fixed,0.03325,0.019534976202404807,0.10215612617242323,0.02201605391215061,0.0009995002498750624
-"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,change,-0.087125,-0.13897473309180497,-0.0017498987176501632,0.03701549219493234,0.047976011994003
+"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,argmax,0.120375,,,,
+"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,fixed,0.03325,,,,
+"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,change,-0.087125,,,,
 "equalized group scores (uses labels, bound)",share of crops changed,fixed,0.092625,,,,
 "equalized group scores (uses labels, bound)",share of crops with no face,fixed,0.0037916666666666667,,,,
 "learned correction, training seed 44",BF-BM,argmax,0.092,0.04949538822818116,0.13262039679185506,0.021738873769878132,0.0009995002498750624
@@ -139,9 +139,9 @@ matched brightness and contrast,share of crops with no face,fixed,0.002583333333
 "learned correction, training seed 44","race (White - Black), mean of the two same-gender comparisons",argmax,-0.008875000000000001,-0.048217120208248525,0.028035890616714035,0.01993200081339623,0.6506746626686657
 "learned correction, training seed 44","race (White - Black), mean of the two same-gender comparisons",fixed,0.0261875,-0.014829462964135624,0.06431031131603018,0.02041883809538024,0.2098950524737631
 "learned correction, training seed 44","race (White - Black), mean of the two same-gender comparisons",change,0.035062499999999996,0.016011223997158354,0.05527218329372868,0.010021079664671154,0.0009995002498750624
-"learned correction, training seed 44",largest absolute gap of the six comparisons,argmax,0.120375,0.0901169578723056,0.18351789879945427,0.02363345578569496,0.0009995002498750624
-"learned correction, training seed 44",largest absolute gap of the six comparisons,fixed,0.08825,0.045371227903490116,0.15235879601870728,0.02779581434858296,0.0009995002498750624
-"learned correction, training seed 44",largest absolute gap of the six comparisons,change,-0.032125,-0.07525424257591154,-0.003382021063189586,0.017949328601046616,0.03398300849575212
+"learned correction, training seed 44",largest absolute gap of the six comparisons,argmax,0.120375,,,,
+"learned correction, training seed 44",largest absolute gap of the six comparisons,fixed,0.08825,,,,
+"learned correction, training seed 44",largest absolute gap of the six comparisons,change,-0.032125,,,,
 "learned correction, training seed 44",share of crops changed,fixed,0.15016666666666667,,,,
 "learned correction, training seed 44",share of crops with no face,fixed,0.005583333333333333,,,,
 "learned correction, training seed 45",BF-BM,argmax,0.092,0.04949538822818116,0.13262039679185506,0.021738873769878132,0.0009995002498750624
@@ -168,8 +168,8 @@ matched brightness and contrast,share of crops with no face,fixed,0.002583333333
 "learned correction, training seed 45","race (White - Black), mean of the two same-gender comparisons",argmax,-0.008875000000000001,-0.048217120208248525,0.028035890616714035,0.01993200081339623,0.6506746626686657
 "learned correction, training seed 45","race (White - Black), mean of the two same-gender comparisons",fixed,0.06225,0.02241249991805496,0.10018954019589181,0.020349240067946833,0.00399800099950025
 "learned correction, training seed 45","race (White - Black), mean of the two same-gender comparisons",change,0.071125,0.050536836929581906,0.09057677883814858,0.010159745722555001,0.0009995002498750624
-"learned correction, training seed 45",largest absolute gap of the six comparisons,argmax,0.120375,0.0901169578723056,0.18351789879945427,0.02363345578569496,0.0009995002498750624
-"learned correction, training seed 45",largest absolute gap of the six comparisons,fixed,0.172,0.1111471343674456,0.2318792021611226,0.031137301973068524,0.0009995002498750624
-"learned correction, training seed 45",largest absolute gap of the six comparisons,change,0.05162499999999999,-0.013167203097300583,0.08185713276739978,0.024635062027545285,0.1329335332333833
+"learned correction, training seed 45",largest absolute gap of the six comparisons,argmax,0.120375,,,,
+"learned correction, training seed 45",largest absolute gap of the six comparisons,fixed,0.172,,,,
+"learned correction, training seed 45",largest absolute gap of the six comparisons,change,0.05162499999999999,,,,
 "learned correction, training seed 45",share of crops changed,fixed,0.139625,,,,
 "learned correction, training seed 45",share of crops with no face,fixed,0.005166666666666667,,,,

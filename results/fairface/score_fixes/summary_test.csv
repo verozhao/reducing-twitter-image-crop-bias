@@ -23,8 +23,8 @@ method,measure,value,est,lo,hi,se,p
 "equalized group scores (uses labels, bound)","race (White - Black), mean of the two same-gender comparisons",argmax,0.041874999999999996,0.004786645906917389,0.07965420625737787,0.01899121791075996,0.02798600699650175
 "equalized group scores (uses labels, bound)","race (White - Black), mean of the two same-gender comparisons",fixed,0.026875000000000003,-0.009756685656866661,0.06467778339538736,0.019133986480179013,0.17191404297851073
 "equalized group scores (uses labels, bound)","race (White - Black), mean of the two same-gender comparisons",change,-0.014999999999999993,-0.022114916846805603,-0.00897241553225962,0.003361269602781808,0.0009995002498750624
-"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,argmax,0.09275,0.05199082721673207,0.1427517595213587,0.023436264072450953,0.0009995002498750624
-"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,fixed,0.043,0.024962337656633624,0.10005199563343703,0.019211275560040285,0.0009995002498750624
-"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,change,-0.04975,-0.06193167077806687,-0.003917413022300713,0.0154220387476294,0.014992503748125937
+"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,argmax,0.09275,,,,
+"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,fixed,0.043,,,,
+"equalized group scores (uses labels, bound)",largest absolute gap of the six comparisons,change,-0.04975,,,,
 "equalized group scores (uses labels, bound)",share of crops changed,fixed,0.025916666666666668,,,,
 "equalized group scores (uses labels, bound)",share of crops with no face,fixed,0.00525,,,,
