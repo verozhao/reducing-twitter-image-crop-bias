@@ -210,6 +210,10 @@ def save(split: str, arrays: dict, desc: pd.DataFrame, names: list[str], eps: di
 
 
 def load(split: str):
-    z = np.load(EVAL_DIR / f"{split}.npz", allow_pickle=False)
+    z = np.load(EVAL_DIR / f"{split}.npz", allow_pickle=True)   # written by this pipeline; pair_ids is an object array
     desc = pd.read_csv(EVAL_DIR / f"{split}_desc.csv", index_col=0)
+    if "pair_ids" in z.files:
+        ids = np.asarray(z["pair_ids"]).astype(str)
+        if len(ids) != len(desc) or not (ids == desc.index.to_numpy().astype(str)).all():
+            raise ValueError(f"{split}: rows of {split}.npz and {split}_desc.csv do not line up")
     return {"square": z["square"], "portrait": z["portrait"]}, desc, list(z["configs"]), list(z["metrics"])

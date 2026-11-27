@@ -403,13 +403,15 @@ def replication(test: Split, bt: Boot, Y: np.ndarray) -> pd.DataFrame:
         g = g[g.mix != "our group mix"]
         mixes.append(g.assign(comparison=g.comparison + ", " + g.mix).drop(columns="mix"))
     rep = pd.concat([t1, t2, t3, t4] + mixes)
+    # Width if every pair were independent: only for single comparisons, with that row's own
+    # pair count. A difference between two gaps has no such width.
     naive = []
     for _, r in rep.iterrows():
-        if r.comparison in COMP_NAMES:
-            n = int((test.comp == r.comparison).sum())
-            naive.append(binomial_halfwidth(0.5 + r.est, n))
-        else:
+        if r.comparison not in COMP_NAMES or r.config == "color only minus all photos":
             naive.append(np.nan)
+            continue
+        n = int(r.n_composites) if r.config == "face kept, both photos in color" else int((test.comp == r.comparison).sum())
+        naive.append(binomial_halfwidth(0.5 + r.est, n))
     rep["naive_pairs_halfwidth"] = naive
     tw = twitter_reference()
     for setting, col in (("wiki_no_scaling_intersect", "twitter_no_scaling"),
@@ -421,18 +423,27 @@ def replication(test: Split, bt: Boot, Y: np.ndarray) -> pd.DataFrame:
         extra = {r.comparison: r.gap for r in sub.itertuples() if r.comparison.startswith(("race", "gender"))
                  and (r.n == sub[sub.comparison == r.comparison].n.max())}
         rep[col] = rep[col].fillna(rep.comparison.map(extra))
-    # The audit's own summaries are at its group mix. The fixed-attribute versions average
-    # the audit's two matching comparisons, as ours do.
+    # Audit values for our mix rows use the same estimator as ours on the audit's per-comparison
+    # runs (5,000 or 10,000 pairs): reweighted by the audit's group sizes, or the plain mean of the
+    # two matching comparisons. The audit's own pooled race run in the fixed-height setting had
+    # only 500 pairs, so it stays only on the plain race row.
     for col in ("twitter_no_scaling", "twitter_fixed_height"):
-        v = rep.drop_duplicates("comparison").set_index("comparison")[col]
-        derived = {"race (White - Black), audit's group mix": v["race (White - Black)"],
-                   "gender (women - men), audit's group mix": v["gender (women - men)"],
+        v = rep[rep.config == "side of top point (Twitter's measure)"].set_index("comparison")[col]
+        derived = {"race (White - Black), audit's group mix": _at_sizes(v, RACE_TERMS, AUDIT_GROUP_SIZES),
+                   "gender (women - men), audit's group mix": _at_sizes(v, GENDER_TERMS, AUDIT_GROUP_SIZES),
                    "race (White - Black), within gender": (v["WF-BF"] + v["WM-BM"]) / 2,
                    "gender (women - men), within race": (v["BF-BM"] + v["WF-WM"]) / 2}
         rep[col] = rep[col].fillna(rep.comparison.map(derived))
+        rep.loc[rep.config == "color only minus all photos", col] = np.nan   # a difference has no audit value
     for col in ("twitter_no_scaling", "twitter_fixed_height"):
         rep[f"{col}_inside_our_ci"] = np.where(rep[col].isna(), np.nan, (rep[col] >= rep.lo) & (rep[col] <= rep.hi))
     return rep
+
+
+def _at_sizes(gaps, terms: dict[str, int], sizes: dict[str, int]) -> float:
+    """Race or gender summary from per-comparison gaps, weighting each comparison by n1 * n2."""
+    w = {c: sizes[c.split("-")[0]] * sizes[c.split("-")[1]] for c in terms}
+    return sum(w[c] * s * gaps[c] for c, s in terms.items()) / sum(w.values())
 
 
 def equal_quality(test: Split, quality: pd.DataFrame, eff: pd.DataFrame) -> pd.DataFrame:

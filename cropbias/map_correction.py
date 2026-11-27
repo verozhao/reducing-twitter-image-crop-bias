@@ -111,9 +111,11 @@ def crop_stats(lay, sal, score: np.ndarray | None = None) -> dict:
             "tw_retained": float(kept), "x": x, "y": float(sal.ys[row])}
 
 
-def summarise(df: pd.DataFrame, pairs: pd.DataFrame, split: str, iters: int = 1000):
+def summarise(df: pd.DataFrame, pairs: pd.DataFrame, split: str, iters: int = C.BOOTSTRAP_ITERS):
     """Paired two-way person bootstrap; differences use the exact same pairs and draws."""
     from .stats import person_weights
+    if len(df) != len(pairs) or not (df.pair_id.to_numpy() == pairs.pair_id.to_numpy()).all():
+        raise ValueError("per-pair rows do not line up with the pairs")
     dataset = pd.read_csv(C.DATA / "dataset.csv")
     people = {}
     for g in C.GROUPS:
@@ -166,7 +168,7 @@ def original_retention_at(lay, sal, center_x):
     return float(mass[(sal.xs >= x0) & (sal.xs < x1)].sum() / mass.sum())
 
 
-def evaluate_scores(pairs, layout, original, new, split: str, output: Path, iters=1000):
+def evaluate_scores(pairs, layout, original, new, split: str, output: Path, iters=C.BOOTSTRAP_ITERS):
     dg_path = C.WORK / "deepgaze" / "test.pkl"
     dg = pickle.loads(dg_path.read_bytes()) if split == "test" and dg_path.exists() else {}
     rows = []

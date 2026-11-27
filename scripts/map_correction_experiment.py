@@ -23,7 +23,7 @@ def main():
     pp.add_argument("--variant", choices=VARIANTS, required=True)
     pp.add_argument("--limit", type=int, help="first N existing pairs per comparison")
     pp.add_argument("--refresh", action="store_true", help="re-score all requested copies")
-    pp.add_argument("--bootstrap-iters", type=int, default=1000)
+    pp.add_argument("--bootstrap-iters", type=int, default=C.BOOTSTRAP_ITERS)
     pp.add_argument("--workers", type=int, default=1, help="copies scored at once by Twitter's program")
     tr = subs.add_parser("train", help="fit on validation people only, select epoch on disjoint people")
     tr.add_argument("--limit", type=int)
@@ -47,7 +47,7 @@ def main():
     ev.add_argument("--checkpoint", type=Path, default=C.WORK / "map_correction" / "model" / "best.pt")
     ev.add_argument("--device", default="cpu", choices=("cpu", "cuda", "mps"))
     ev.add_argument("--limit", type=int)
-    ev.add_argument("--bootstrap-iters", type=int, default=1000)
+    ev.add_argument("--bootstrap-iters", type=int, default=C.BOOTSTRAP_ITERS)
     ev.add_argument("--output", type=Path, default=None,
                     help="folder for summary.csv and per_pair.csv (default work/map_correction/evaluation/<split>)")
     args = ap.parse_args()
