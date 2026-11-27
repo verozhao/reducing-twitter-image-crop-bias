@@ -155,6 +155,15 @@ A small network trained on validation people adjusts Twitter's map before the ar
 
 Updated 2026-11-26
 
+| Comparison | Original gap | Corrected gap | Paired change, 95% interval |
+|---|---:|---:|---:|
+| Black women–Black men | 9.2 | 3.2 | −6.0 [−9.1, −3.1] |
+| White women–Black women | 1.7 | 9.2 | +7.4 [+3.5, +11.3] |
+| Black women–White men | 11.1 | 0.0 | −11.0 [−14.0, −8.3] |
+| White women–Black men | 10.3 | 11.4 | +1.2 [−2.6, +5.1] |
+| White men–Black men | −3.5 | 2.4 | +5.9 [+2.8, +9.1] |
+| White women–White men | 12.0 | 9.4 | −2.6 [−6.6, +1.0] |
+
 - On the 24,000 test pairs of held-out people it changes about 20% of crops (`results/map_correction/summary_test.csv`). The gaps between Black women and men shrink: Black women vs White men from 11.1 to 0.0, and Black women vs Black men from 9.2 to 3.2. Both race comparisons move toward White people, and both changes are significant: White women vs Black women grows from 1.7 to 9.2, and White men vs Black men goes from -3.5 to 2.4. DeepGaze density inside the crop drops by up to 2.3 points.
 - The face-preserving summary was rerun with the corrected bootstrap and the DeepGaze cache (`results/face_preserving/summary_test.csv`). Its point values are unchanged. DeepGaze keeps 62% to 64% of its density in the argmax crop and 93% to 94% in the face-preserving preview, mostly through the full-image fallback.
 
