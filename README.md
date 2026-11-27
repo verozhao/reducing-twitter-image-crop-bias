@@ -68,7 +68,7 @@ Audit values come from the raw counts Twitter released for its fixed-height sett
 - At every setting that changes at least 2% of one-person crops, every rule removes significantly less gap per changed crop than its random control (p ≤ 0.008, `results/square/efficiency.csv`). Crops change where the scores are close, and those pairs hold no measurable share of the gap.
 - At the setting that changes about 20% of crops, tie-aware removes 10.3% of the gap (0.9% to 18.5%). A random switch of the same size removes 37%.
 - Large reductions need many random crops. Sampling at T = 1, the temperature of the sampling option in Twitter's released plotting code, removes 38% of the gap. It changes 33% of one-person crops, and a rerun on the same photo changes who is kept 42% of the time.
-- At equal crop quality the answer depends on the measure. With 1% of crops keeping no face, tie-aware leaves a pooled gap of 3.9 points and sampling 6.9. At a DeepGaze share of 62%, sampling leaves 5.0 and tie-aware 6.0 (`results/square/equal_quality.csv`).
+- At equal crop quality the answer depends on the measure. With 1% of crops keeping no face, tie-aware leaves a pooled gap of 3.9 points and sampling 6.8. At a DeepGaze share of 62%, sampling leaves 5.0 and tie-aware 6.0 (`results/square/equal_quality.csv`).
 - Stability fallback skips photos without regard to the gap, so among the photos it still crops the pooled gap rises from 8.0 to 8.9 points (p = 0.004).
 
 ![Rules](results/figures/fig3_tradeoff.png)
@@ -178,3 +178,13 @@ Updated 2026-11-26
 - The learned correction lowers the gender gap by 4.6 points (2.5 to 6.9) but adds a White-favored race gap of 6.6 points (4.3 to 9.1), so its largest gap barely moves. A random switch of 20% of crops would remove about 40% of every gap, about what it removes from the gender gap. Of four preset settings (mean-square or maximin objective, temperature 0.2 or 0.05), the original one did best on held-out validation people by a small margin (largest gap 8.5 against 9.5 points), and the same race gap appeared there (`results/score_fixes/correction_settings_validation.csv`).
 - Two more seeds of the learned correction (44 and 45) show the same side effect. A seed sets both the starting weights and the split of validation people into fitting and tuning halves. The White-favored race gap grows by 3.5 and 7.1 points, both significant. The gender gap falls by 4.3 points with seed 44 and does not fall with seed 45, so the gain on gender is not stable.
 - On FairFace, equalizing group scores lowers the gender gap from 5.1 to 2.0 and the race gap from 4.2 to 2.7 while changing 2.6% of crops (`results/fairface/score_fixes/`). Neither remaining gap is significant, but a constant group shift explains less of the FairFace gaps than of the WikiCeleb ones.
+
+## Report tables
+
+Tables in the final report that the main analysis does not write (`python -m scripts.report_tables`, `results/report_tables/`).
+
+Updated 2026-11-26
+
+- `fixes_table.csv` puts every single-crop fix on one footing: gender and race gaps with people-level intervals, the share of crops changed in those comparisons, and the gap a random switch of the same share would leave. The equalized-score bound changes 12.6% of cross-gender crops, and a random switch of that share would leave a gender gap of 7.9 points.
+- `rules_ten_draws.csv` gives the share of the pooled gap each rule removes over the ten draws of the test pairs. At the 20% setting, tie-aware cropping removes 13.1% on average, against about 37% for a random switch of the same size.
+- `bootstrap_seed_check.csv` reruns the people-level bootstrap with seeds 8 to 12. Interval endpoints move by at most 0.55 points for the argmax gaps and by at most 0.98 points for the removed shares.

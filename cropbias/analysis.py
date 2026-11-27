@@ -670,47 +670,51 @@ def make_figures(test, bt, gaps, quality, eff, ops, near, rep, sign) -> None:
         cl = [c for c in test.cfgs if c.startswith(prefix)]
         return sorted(cl, key=lambda c: e.one_person_crops_changed[c])
 
-    fams = [("sampling", "sampling_", SERIES[0]), ("averaging", "averaging_", SERIES[1]),
-            ("tie-aware (ours)", "tie_rate", SERIES[2]), ("stability, with brightness (ours)", "stability_main_", SERIES[3]),
-            ("stability, no brightness (ours)", "stability_geom_", SERIES[4])]
-    fig, axs = plt.subplots(1, 3, figsize=(13, 4), sharey=True)
-    ax = axs[0]
-    xmax = 0.0
-    for name, prefix, color in fams:
-        cl = fam_cfgs(prefix)
-        xs = [0.0] + [100 * e.one_person_crops_changed[c] for c in cl]
-        ys = [g0] + [100 * e.pooled_gap[c] for c in cl]
-        xmax = max(xmax, max(xs))
-        ax.plot(xs, ys, "o-", ms=4, color=color, label=name)
-    xx = np.linspace(0, min(100, xmax), 50)
-    ax.plot(xx, g0 * (1 - xx / 100), color=SERIES[5], label="random fallback (control)")
-    xs2 = np.linspace(0, min(50, xmax), 50)
-    ax.plot(xs2, g0 * (1 - 2 * xs2 / 100), color=SERIES[6], label="random switch (control)")
-    ax.scatter([0], [g0], s=60, color=INK, zorder=4, label="argmax (Twitter)")
-    ax.set_xlabel("One-person crops the rule changes (%)")
-    ax.set_title("Gap removed per crop changed")
-    handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=4, fontsize=8, bbox_to_anchor=(0.5, -0.02))
-    for ax, (metric, xlabel, title) in zip(axs[1:], (
-            ("p_neither", "Crops that keep no face (%)", "Gap vs crops with no face"),
-            ("dg", "DeepGaze IIE share inside the crop (%)", "Gap vs quality from a second model"))):
-        if ("argmax", metric) not in q.index:
-            ax.set_visible(False)
-            continue
-        for name, prefix, color in fams[:3]:
+    # Drawn at page width so its text prints near 8 pt. Each family has its own color and
+    # marker. The random controls are gray dashed lines, so no two curves share a color.
+    fams = [("sampling", "sampling_", SERIES[0], "o"), ("averaging", "averaging_", SERIES[1], "s"),
+            ("tie-aware (ours)", "tie_rate", SERIES[2], "^"), ("stability, with brightness (ours)", "stability_main_", SERIES[3], "D"),
+            ("stability, no brightness (ours)", "stability_geom_", SERIES[4], "v")]
+    small = {"axes.titlesize": 9, "axes.labelsize": 8.5, "xtick.labelsize": 8, "ytick.labelsize": 8}
+    with plt.rc_context(small):
+        fig, axs = plt.subplots(1, 3, figsize=(7.4, 3.3), sharey=True)
+        ax = axs[0]
+        xmax = 0.0
+        for name, prefix, color, mk in fams:
             cl = fam_cfgs(prefix)
-            xs = [100 * q[("argmax", metric)]] + [100 * q[(c, metric)] for c in cl]
+            xs = [0.0] + [100 * e.one_person_crops_changed[c] for c in cl]
             ys = [g0] + [100 * e.pooled_gap[c] for c in cl]
-            ax.plot(xs, ys, "o-", ms=4, color=color, label=name)
-        ax.scatter([100 * q[("argmax", metric)]], [g0], s=60, color=INK, zorder=4, label="argmax (Twitter)")
-        ax.set_xlabel(xlabel)
-        ax.set_title(title)
-    for ax in axs:
-        ax.axhline(0, color=BASE, lw=1)
-    axs[0].set_ylabel("Pooled gap, 6 comparisons (points)")
-    fig.tight_layout(rect=(0, 0.1, 1, 1))
-    fig.savefig(fig_dir / "fig3_tradeoff.png", dpi=200)
-    plt.close(fig)
+            xmax = max(xmax, max(xs))
+            ax.plot(xs, ys, marker=mk, ms=3.5, lw=1.4, color=color, label=name, zorder=3)
+        xx = np.linspace(0, min(100, xmax), 50)
+        ax.plot(xx, g0 * (1 - xx / 100), color=INK2, lw=1.1, ls="--", label="random fallback (control)")
+        xs2 = np.linspace(0, min(50, xmax), 50)
+        ax.plot(xs2, g0 * (1 - 2 * xs2 / 100), color=INK2, lw=1.1, ls=":", label="random switch (control)")
+        ax.scatter([0], [g0], s=36, color=INK, zorder=4, label="argmax (Twitter)")
+        ax.set_xlabel("Crops changed (%)")
+        ax.set_title("(a) Gap vs crops changed")
+        handles, labels = ax.get_legend_handles_labels()
+        fig.legend(handles, labels, loc="lower center", ncol=3, fontsize=7.5, bbox_to_anchor=(0.5, -0.01))
+        for ax, (metric, xlabel, title) in zip(axs[1:], (
+                ("p_neither", "Crops with no face (%)", "(b) Gap vs lost faces"),
+                ("dg", "DeepGaze share in crop (%)", "(c) Gap vs DeepGaze share"))):
+            if ("argmax", metric) not in q.index:
+                ax.set_visible(False)
+                continue
+            for name, prefix, color, mk in fams[:3]:
+                cl = fam_cfgs(prefix)
+                xs = [100 * q[("argmax", metric)]] + [100 * q[(c, metric)] for c in cl]
+                ys = [g0] + [100 * e.pooled_gap[c] for c in cl]
+                ax.plot(xs, ys, marker=mk, ms=3.5, lw=1.4, color=color, label=name, zorder=3)
+            ax.scatter([100 * q[("argmax", metric)]], [g0], s=36, color=INK, zorder=4)
+            ax.set_xlabel(xlabel)
+            ax.set_title(title)
+        for ax in axs:
+            ax.axhline(0, color=BASE, lw=1)
+        axs[0].set_ylabel("Pooled gap (points)")
+        fig.tight_layout(rect=(0, 0.2, 1, 1))
+        fig.savefig(fig_dir / "fig3_tradeoff.png", dpi=250)
+        plt.close(fig)
 
     # 4. top-k suggestions
     tk = pd.read_csv(C.RESULTS / "square" / "topk_gaps.csv")
